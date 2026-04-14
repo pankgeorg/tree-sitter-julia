@@ -534,6 +534,7 @@ module.exports = grammar({
       $.index_expression,
       $.interpolation_expression,
       $.quote_expression,
+      prec(-1, alias('public', $.identifier)), // Julia 1.11: contextual keyword
     ),
 
     _array: $ => choice(

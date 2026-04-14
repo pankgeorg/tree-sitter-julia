@@ -1797,6 +1797,19 @@
         {
           "type": "SYMBOL",
           "name": "quote_expression"
+        },
+        {
+          "type": "PREC",
+          "value": -1,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "STRING",
+              "value": "public"
+            },
+            "named": true,
+            "value": "identifier"
+          }
         }
       ]
     },
