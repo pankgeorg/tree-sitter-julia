@@ -128,6 +128,7 @@ const KEYWORDS = choice(
   'global',
   'local',
   'end',
+  'public',
 );
 
 module.exports = grammar({

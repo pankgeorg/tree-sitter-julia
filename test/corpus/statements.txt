@@ -472,3 +472,22 @@ global function bar() 4 end
         (call_expression (identifier) (argument_list)))
         (block
           (integer_literal)))))
+
+
+===============================
+public statements
+===============================
+
+module Mod
+  public a, b
+  public @macroname
+end
+
+---
+
+(source_file
+  (module_definition
+    name: (identifier)
+    (block
+      (public_statement (identifier) (identifier))
+      (public_statement (macro_identifier (identifier))))))
