@@ -3912,6 +3912,40 @@
                   {
                     "type": "SYMBOL",
                     "name": "interpolation_expression"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "quote_expression"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "operator"
+                  },
+                  {
+                    "type": "SEQ",
+                    "members": [
+                      {
+                        "type": "STRING",
+                        "value": "("
+                      },
+                      {
+                        "type": "CHOICE",
+                        "members": [
+                          {
+                            "type": "SYMBOL",
+                            "name": "_exportable"
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "quote_expression"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "STRING",
+                        "value": ")"
+                      }
+                    ]
                   }
                 ]
               }

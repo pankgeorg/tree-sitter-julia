@@ -900,7 +900,13 @@ module.exports = grammar({
       repeat1(
         seq(
           token.immediate('.'),
-          choice($.identifier, $.interpolation_expression),
+          choice(
+            $.identifier,
+            $.interpolation_expression,
+            $.quote_expression,                             // A.:+
+            $.operator,                                      // A.==, A.⋆
+            parenthesize(choice($._exportable, $.quote_expression)), // A.(:+)
+          ),
         ),
       ),
     ),

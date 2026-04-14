@@ -383,6 +383,39 @@ import Base: @view as @v
       (import_alias (macro_identifier (identifier)) (macro_identifier (identifier))))))
 
 
+==============================
+advanced import paths
+==============================
+
+import A.:+
+import A.:(+)
+import A.(:+)
+using A: b.:c
+
+---
+
+(source_file
+  (import_statement
+    (import_path
+      (identifier)
+      (quote_expression (operator))))
+  (import_statement
+    (import_path
+      (identifier)
+      (quote_expression
+        (parenthesized_expression (operator)))))
+  (import_statement
+    (import_path
+      (identifier)
+      (quote_expression (operator))))
+  (using_statement
+    (selected_import
+      (identifier)
+      (import_path
+        (identifier)
+        (quote_expression (identifier))))))
+
+
 ===============================
 const statements
 ===============================
