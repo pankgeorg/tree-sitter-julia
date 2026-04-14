@@ -11,19 +11,18 @@ Includes: aviatesk's PRs #182 (CLI 0.26.6 regen) and #183 (typegroup syntax)
 
 ### Tier 1 — Easy wins (grammar.js only)
 
-- [ ] **`public` as contextual identifier** (~6 snippets)
-  - `public = 4`, `public[7] = 5`, `function f(public) end`
-  - Add to KEYWORDS + alias in `_expression` (like `begin`)
-  - Upstream: no issue yet — file one
+- [x] **`public` in KEYWORDS** — added to KEYWORDS constant for `var"public"` support.
+  Contextual identifier (public=4 in function scope) deferred — tree-sitter can't
+  distinguish module scope from function scope.
   
-- [ ] **Tuple destructuring `x, = xs`** (~2 snippets)
-  - `x, = xs`, `x, = (2, 3)`
-  - Fix `open_tuple` to allow trailing comma
-  - Upstream: issue #164
+- [x] **Tuple destructuring `x, = xs`** — fixed `open_tuple` to allow trailing comma.
+  Fixes upstream issue #164.
 
-- [ ] **Character literal `'α'`** (~1 snippet)
-  - Test if it already works; fix regex if not
-  - Upstream: no issue
+- [x] **Character literal `'α'`** — already works, confirmed.
+
+- [x] **Unicode identifier start** — added `\p{Sc}` (currency: €, £, ¥, ₿) and
+  expanded Sm allowlist (∞, ⊤, ⊥, ⋀-⋃, ◸-◿, ♯, ℘, etc.) to match Julia's
+  `jl_id_start_char()`.
 
 ### Tier 2 — Medium complexity
 
@@ -37,11 +36,19 @@ Includes: aviatesk's PRs #182 (CLI 0.26.6 regen) and #183 (typegroup syntax)
   - Extend `_scoped_identifier` / `_exportable`
   - Upstream: issue #74
 
+- [ ] **Operator suffixes** (`+₁`, `×ᵀ`, `⊕′`)
+  - Julia supports 121 suffix characters (subscripts, superscripts, primes, combining marks)
+  - tree-sitter-julia has zero support for operator suffixes
+  - Needs `token(seq(op, optional(suffix_pattern)))` wrapping
+  - See: `jl_op_suffix_char()` in `src/flisp/julia_extensions.c`
+
 ### Tier 3 — Deferred (hard / architectural)
 
 - [ ] `$` as operator (`$$a`, `a $ b`) — upstream issue #161
 - [ ] `var"..."` identifiers — upstream issue #92 (needs scanner)
 - [ ] Multi-paren juxtaposition `(2)(3)x` — upstream issue #92
+- [ ] `public` as contextual identifier — needs scope awareness
+- [ ] Emoji identifiers — excluded to avoid parser size explosion
 
 ## Dev workflow
 
