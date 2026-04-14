@@ -161,6 +161,7 @@ module.exports = grammar({
     $._content_str_3_raw,
     $._end_cmd,
     $._end_str,
+    $._import_from_current_module,
   ],
 
   conflicts: $ => [
@@ -467,7 +468,7 @@ module.exports = grammar({
     import_alias: $ => seq($._importable, 'as', $._exportable),
 
     import_path: $ => seq(
-      token(repeat1('.')),
+      $._import_from_current_module, // dots with optional spaces: .A, ..A, . .A
       choice(
         $.identifier,
         $._scoped_identifier,

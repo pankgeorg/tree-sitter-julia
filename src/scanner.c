@@ -27,6 +27,7 @@ enum TokenType {
     CONTENT_STR_3_RAW,
     END_CMD,
     END_STR,
+    IMPORT_FROM_CURRENT_MODULE,
 };
 
 void *tree_sitter_julia_external_scanner_create() {
@@ -126,6 +127,34 @@ static bool scan_block_comment(TSLexer *lexer) {
     }
 }
 
+static void skip_whitespace(TSLexer *lexer) {
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t' ||
+           lexer->lookahead == '\n' || lexer->lookahead == '\r') {
+        lexer->advance(lexer, true); // true = skip (mark as whitespace)
+    }
+}
+
+static bool scan_import_from_current_module(TSLexer *lexer) {
+    skip_whitespace(lexer);
+    if (lexer->lookahead != '.') return false;
+    advance(lexer);
+    mark_end(lexer);
+    for (;;) {
+        // Skip spaces/tabs between dots (not newlines)
+        while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+            advance(lexer);
+        }
+        if (lexer->lookahead == '.') {
+            advance(lexer);
+            mark_end(lexer);
+        } else {
+            break;
+        }
+    }
+    lexer->result_symbol = IMPORT_FROM_CURRENT_MODULE;
+    return true;
+}
+
 bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
     if (valid_symbols[IMMEDIATE_PAREN] && lexer->lookahead == '(') {
         lexer->result_symbol = IMMEDIATE_PAREN;
@@ -141,6 +170,10 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
         return true;
     } else if (valid_symbols[IMMEDIATE_COMMAND_START] && lexer->lookahead == '`') {
         lexer->result_symbol = IMMEDIATE_COMMAND_START;
+        return true;
+    }
+
+    if (valid_symbols[IMPORT_FROM_CURRENT_MODULE] && scan_import_from_current_module(lexer)) {
         return true;
     }
 
