@@ -1078,7 +1078,7 @@ module.exports = grammar({
           $._end_str,
         ),
       ),
-      optional(field('suffix', $.identifier)),
+      optional(field('suffix', $._string_macro_suffix)),
     )),
 
     prefixed_command_literal: $ => prec.left(seq(
@@ -1096,8 +1096,16 @@ module.exports = grammar({
           $._end_cmd,
         ),
       ),
-      optional(field('suffix', $.identifier)),
+      optional(field('suffix', $._string_macro_suffix)),
     )),
+
+    // String/command macro suffixes: r"regex"i, x"s"end, x"s"2
+    _string_macro_suffix: $ => choice(
+      $.identifier,
+      alias(KEYWORDS, $.identifier),
+      $.integer_literal,
+      $.float_literal,
+    ),
 
     string_interpolation: $ => seq(
       '$',
