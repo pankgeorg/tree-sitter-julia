@@ -904,12 +904,31 @@ module.exports = grammar({
         .replace(/\\/g, '\\\\')
         .replace(/\s+/g, '');
 
-      // Some symbols in Sm and So unicode categories that are identifiers
-      const validMathSymbols = '°∀-∇∎-∑∫-∳';
+      // Sm (Math Symbol) characters valid as identifier start in Julia.
+      // From jl_id_start_char() in julia_extensions.c.
+      const validSmSymbols = [
+        '°',
+        '∀-∇',       // U+2200-U+2207
+        '∎-∑',       // U+220E-U+2211
+        '∞-∟',       // U+221E-U+221F
+        '∫-∳',       // U+222B-U+2233
+        '⅀-⅄',       // U+2140-U+2144
+        '∿',         // U+223F
+        '⊤-⊥',       // U+22A4-U+22A5
+        '⊾-⊿',       // U+22BE-U+22BF
+        '⋀-⋃',       // U+22C0-U+22C3
+        '◸-◿',       // U+25F8-U+25FF
+        '∠-∢',       // U+2220-U+2222
+        '♯',         // U+266F
+        '℘',         // U+2118
+        '℮',         // U+212E
+      ].join('');
 
       // Emojis are valid Julia identifiers but unsupported due to exploding parser size
       // todo(clason): check if regex can be optimized
-      const start = `[_\\p{XID_Start}${validMathSymbols}&&[^0-9#*]]`;
+      // Sc (Currency Symbol) covers €, £, ¥, ₹, ₿, etc.
+      // Exclude $ (U+0024) from Sc — it's the interpolation operator, not an identifier.
+      const start = `[_\\p{XID_Start}\\p{Sc}${validSmSymbols}&&[^0-9#*$]]`;
       const rest = `[^"'\`\\s\\.\\-\\[\\]${nonIdentifierCharacters}]*`;
       return new RegExp(start + rest);
     },

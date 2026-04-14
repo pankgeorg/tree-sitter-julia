@@ -699,3 +699,19 @@ a, b, = (1, 2, 3)
       (integer_literal)
       (integer_literal)
       (integer_literal))))
+
+
+==============================
+unicode identifier start characters
+==============================
+
+€price = 100
+£cost = 200
+∞limit = 999
+
+---
+
+(source_file
+  (assignment (identifier) (operator) (integer_literal))
+  (assignment (identifier) (operator) (integer_literal))
+  (assignment (identifier) (operator) (integer_literal)))
