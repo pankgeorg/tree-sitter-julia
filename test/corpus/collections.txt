@@ -147,6 +147,47 @@ Int[1 2 3 4]
         (integer_literal)))))
 
 
+==============================
+empty ncat expressions
+==============================
+
+[;]
+[;;]
+[;;;]
+
+---
+
+(source_file
+  (matrix_expression)
+  (matrix_expression)
+  (matrix_expression))
+
+
+==============================
+bracescat expressions
+==============================
+
+{x y}
+{a ;; b}
+{x ;;; y}
+{a ;;;; b}
+
+---
+
+(source_file
+  (curly_expression
+    (matrix_row (identifier) (identifier)))
+  (curly_expression
+    (matrix_row (identifier))
+    (matrix_row (identifier)))
+  (curly_expression
+    (matrix_row (identifier))
+    (matrix_row (identifier)))
+  (curly_expression
+    (matrix_row (identifier))
+    (matrix_row (identifier))))
+
+
 ========================================
 comprehension array collections
 ========================================

@@ -852,6 +852,10 @@
         {
           "type": "assignment",
           "named": true
+        },
+        {
+          "type": "matrix_row",
+          "named": true
         }
       ]
     }
@@ -1880,7 +1884,7 @@
     "fields": {},
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "matrix_row",

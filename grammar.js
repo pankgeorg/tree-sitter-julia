@@ -587,9 +587,14 @@ module.exports = grammar({
 
     matrix_expression: $ => prec(PREC.array, seq(
       '[',
-      $.matrix_row,
-      repeat(seq($._terminator, $.matrix_row)),
-      optional($._terminator),
+      choice(
+        seq(
+          $.matrix_row,
+          repeat(seq($._terminator, $.matrix_row)),
+          optional($._terminator),
+        ),
+        $._semicolon, // empty ncat: [;], [;;], [;;;], etc.
+      ),
       ']',
     )),
 
@@ -619,11 +624,26 @@ module.exports = grammar({
       optional(','),
     ),
 
-    curly_expression: $ => seq(
-      '{',
-      sep(',', $._bracket_form),
-      optional(','),
-      '}',
+    curly_expression: $ => choice(
+      seq(
+        '{',
+        sep(',', $._bracket_form),
+        optional(','),
+        '}',
+      ),
+      // bracescat: space/semicolon-separated {x y}, {a ;; b}
+      prec(PREC.array, seq(
+        '{',
+        choice(
+          seq(
+            $.matrix_row,
+            repeat(seq($._terminator, $.matrix_row)),
+            optional($._terminator),
+          ),
+          $._semicolon,
+        ),
+        '}',
+      )),
     ),
 
     adjoint_expression: $ => seq(
