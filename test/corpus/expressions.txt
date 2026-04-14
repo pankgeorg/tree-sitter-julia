@@ -40,6 +40,8 @@ Base.:+
 
 df."a"
 
+x.?
+
 ---
 
 (source_file
@@ -73,7 +75,10 @@ df."a"
   (field_expression
     (identifier)
     (string_literal
-      (content))))
+      (content)))
+  (field_expression
+    (identifier)
+    (identifier)))
 
 ==============================
 index expressions

@@ -184,6 +184,7 @@ module.exports = grammar({
 
   rules: {
     source_file: $ => optional(seq(
+      optional($._terminator),
       sep1($._terminator, $._block_form),
       optional($._terminator)
     )),
@@ -278,6 +279,7 @@ module.exports = grammar({
       'abstract',
       'type',
       $.type_head,
+      optional($._terminator),
       'end',
     ),
 
@@ -286,6 +288,7 @@ module.exports = grammar({
       'type',
       $.type_head,
       $.integer_literal,
+      optional($._terminator),
       'end',
     ),
 
@@ -660,6 +663,7 @@ module.exports = grammar({
         $.interpolation_expression,
         $.quote_expression,
         $._string,
+        alias('?', $.identifier), // x.? (getproperty with ?)
       ),
     )),
 
