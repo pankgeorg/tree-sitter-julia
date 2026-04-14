@@ -124,6 +124,7 @@ end
 try statements
 ==============================
 
+try x end
 try catch end
 try finally end
 
@@ -150,6 +151,9 @@ end
 ---
 
 (source_file
+  (try_statement
+    (block (identifier)))
+
   (try_statement
     (catch_clause))
 
