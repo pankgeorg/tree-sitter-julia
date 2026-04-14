@@ -26,14 +26,15 @@ Includes: aviatesk's PRs #182 (CLI 0.26.6 regen) and #183 (typegroup syntax)
 
 ### Tier 2 — Medium complexity
 
-- [ ] **Semicolons in brackets** (~6 snippets)
-  - `[;]`, `{a ;; b}`, `{x ;;; y}`
-  - Add semicolon support to `vector_expression` and `curly_expression`
+- [x] **Semicolons in brackets** (~6 snippets)
+  - Empty ncat `[;]`, `[;;]`, `[;;;]` — modified `matrix_expression` to allow bare semicolons
+  - Bracescat `{x y}`, `{a ;; b}`, `{x ;;; y}` — added space/semicolon branch to `curly_expression`
   - Upstream: issue #120
 
-- [ ] **Advanced import paths** (~5 snippets)
-  - `import A.:+`, `import A.(:+)`, `using A: b.:c`
-  - Extend `_scoped_identifier` / `_exportable`
+- [x] **Advanced import paths** (~5 snippets)
+  - `import A.:+`, `import A.(:+)`, `import A.:(+)`, `using A: b.:c`
+  - Extended `_scoped_identifier` to allow `quote_expression`, `operator`, parenthesized exportable after dot
+  - Note: `import A.==` still fails — lexer combines `.==` as broadcast operator
   - Upstream: issue #74
 
 - [ ] **Operator suffixes** (`+₁`, `×ᵀ`, `⊕′`)
