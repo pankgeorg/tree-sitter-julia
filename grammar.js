@@ -204,9 +204,9 @@ module.exports = grammar({
       alias($._closed_assignment, $.assignment),
     ),
 
-    open_tuple: $ => prec(PREC.tuple, seq(
-      $._expression,
-      repeat1(seq(',', $._expression))
+    open_tuple: $ => prec(PREC.tuple, choice(
+      seq($._expression, repeat1(seq(',', $._expression)), optional(',')),  // x, y [, z ...] [,]
+      seq($._expression, ','),  // x,  (trailing comma destructuring)
     )),
 
     // assignments inside blocks

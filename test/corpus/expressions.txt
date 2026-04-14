@@ -676,3 +676,26 @@ a -> a = 2, 3
         (operator)
         (integer_literal)))
     (integer_literal)))
+
+
+==============================
+tuple destructuring with trailing comma
+==============================
+
+x, = xs
+a, b, = (1, 2, 3)
+
+---
+
+(source_file
+  (assignment
+    (open_tuple (identifier))
+    (operator)
+    (identifier))
+  (assignment
+    (open_tuple (identifier) (identifier))
+    (operator)
+    (tuple_expression
+      (integer_literal)
+      (integer_literal)
+      (integer_literal))))
