@@ -2750,6 +2750,10 @@
         {
           "type": "vector_expression",
           "named": true
+        },
+        {
+          "type": "where_expression",
+          "named": true
         }
       ]
     }

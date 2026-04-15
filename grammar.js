@@ -297,6 +297,7 @@ module.exports = grammar({
     type_head: $ => prec(PREC.stmt, choice(
       $._primary_expression,
       $.binary_expression,
+      $.where_expression, // struct Foo{T} <: Bar where {T} end
     )),
 
     abstract_definition: $ => seq(
