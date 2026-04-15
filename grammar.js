@@ -707,6 +707,7 @@ module.exports = grammar({
       token.immediate('.'),
       choice(
         $.identifier,
+        alias($._emoji_identifier, $.identifier), // sys.😄
         $.interpolation_expression,
         $.quote_expression,
         $._string,
