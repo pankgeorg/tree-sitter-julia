@@ -2226,41 +2226,49 @@
               }
             },
             {
-              "type": "SYMBOL",
-              "name": "_semicolon"
-            },
-            {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SEQ",
-                  "members": [
-                    {
-                      "type": "SYMBOL",
-                      "name": "_bracket_form"
-                    },
-                    {
-                      "type": "REPEAT",
-                      "content": {
+              "type": "REPEAT1",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "_semicolon"
+                  },
+                  {
+                    "type": "CHOICE",
+                    "members": [
+                      {
                         "type": "SEQ",
                         "members": [
                           {
-                            "type": "STRING",
-                            "value": ","
-                          },
-                          {
                             "type": "SYMBOL",
                             "name": "_bracket_form"
+                          },
+                          {
+                            "type": "REPEAT",
+                            "content": {
+                              "type": "SEQ",
+                              "members": [
+                                {
+                                  "type": "STRING",
+                                  "value": ","
+                                },
+                                {
+                                  "type": "SYMBOL",
+                                  "name": "_bracket_form"
+                                }
+                              ]
+                            }
                           }
                         ]
+                      },
+                      {
+                        "type": "BLANK"
                       }
-                    }
-                  ]
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
+                    ]
+                  }
+                ]
+              }
             },
             {
               "type": "STRING",
@@ -3043,6 +3051,10 @@
           {
             "type": "CHOICE",
             "members": [
+              {
+                "type": "SYMBOL",
+                "name": "interpolation_expression"
+              },
               {
                 "type": "SYMBOL",
                 "name": "integer_literal"

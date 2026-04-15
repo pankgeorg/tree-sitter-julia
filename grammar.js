@@ -638,14 +638,14 @@ module.exports = grammar({
     vector_expression: $ => choice(
       // Vector with parameters: comma-separated elements, then ; params
       // [a, b; c] → vect(a, b, parameters(c))
-      // Requires at least one comma before ; (otherwise it's vcat/matrix).
-      // Used by JuMP: @variable(model, x[i=1:3, j=1:3; isodd(i)])
+      // [a, b; c; d] → vect(a, b, parameters(c, d))
+      // Requires at least one comma before first ; (otherwise it's vcat/matrix).
+      // Used by JuMP: @variable(model, x[i=1:3, j=1:3; isodd(i); iseven(j)])
       seq(
         '[',
         $._bracket_form,
         repeat1(seq(',', $._bracket_form)),
-        $._semicolon,
-        sep(',', $._bracket_form),
+        repeat1(seq($._semicolon, sep(',', $._bracket_form))),
         ']',
       ),
       // Regular vector: comma-separated
@@ -779,6 +779,7 @@ module.exports = grammar({
     interpolation_expression: $ => prec.right(PREC.prefix, seq(
       '$',
       choice(
+        $.interpolation_expression, // $$x = $($x) nested interpolation
         $.integer_literal,
         $.float_literal,
         $.identifier,
