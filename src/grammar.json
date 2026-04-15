@@ -3330,7 +3330,7 @@
                 "type": "ALIAS",
                 "content": {
                   "type": "SYMBOL",
-                  "name": "_tilde_operator"
+                  "name": "_binary_tilde"
                 },
                 "named": true,
                 "value": "operator"
@@ -8451,6 +8451,10 @@
     {
       "type": "SYMBOL",
       "name": "_import_from_current_module"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_binary_tilde"
     }
   ],
   "inline": [

@@ -28,6 +28,7 @@ enum TokenType {
     END_CMD,
     END_STR,
     IMPORT_FROM_CURRENT_MODULE,
+    BINARY_TILDE,
 };
 
 void *tree_sitter_julia_external_scanner_create() {
@@ -134,6 +135,58 @@ static void skip_whitespace(TSLexer *lexer) {
     }
 }
 
+// Matches ~ or .~ as a BINARY operator, using whitespace sensitivity.
+// Julia rule: ~ is unary (prefix) ONLY when preceded by space and followed
+// by no space (e.g., `a ~b` is hcat(a, ~b)). In all other cases, ~ is binary:
+//   a ~ b  → binary (space before AND after)
+//   a~b    → binary (no space before)
+//   a~ b   → binary (no space before)
+//   a ~b   → unary  (space before, no space after) — DON'T match here
+static bool scan_binary_tilde(TSLexer *lexer) {
+    // Check for whitespace at current position (before ~).
+    // External scanner is called at raw input, before extras consumption.
+    // Only check spaces/tabs, NOT newlines (newlines are statement terminators).
+    bool has_space_before = (lexer->lookahead == ' ' || lexer->lookahead == '\t');
+
+    // Skip spaces/tabs before the tilde (not newlines — those are terminators)
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+        lexer->advance(lexer, true);
+    }
+
+    // If we hit a newline, don't consume it — let tree-sitter handle it
+    if (lexer->lookahead == '\n' || lexer->lookahead == '\r') {
+        return false;
+    }
+
+    // Check for optional . (broadcast tilde .~)
+    if (lexer->lookahead == '.') {
+        lexer->advance(lexer, false);
+        // .~ is always binary (broadcast operator), no whitespace sensitivity
+        if (lexer->lookahead != '~') return false;
+        lexer->advance(lexer, false);
+        lexer->mark_end(lexer);
+        lexer->result_symbol = BINARY_TILDE;
+        return true;
+    }
+
+    // Must be ~
+    if (lexer->lookahead != '~') return false;
+    lexer->advance(lexer, false);
+    lexer->mark_end(lexer);
+
+    // Check for whitespace after ~
+    bool has_space_after = (lexer->lookahead == ' ' || lexer->lookahead == '\t' ||
+                            lexer->lookahead == '\n' || lexer->lookahead == '\r');
+
+    // Julia rule: unary only when space before AND no space after
+    if (has_space_before && !has_space_after) {
+        return false;  // This is unary — don't match as binary
+    }
+
+    lexer->result_symbol = BINARY_TILDE;
+    return true;
+}
+
 static bool scan_import_from_current_module(TSLexer *lexer) {
     skip_whitespace(lexer);
     if (lexer->lookahead != '.') return false;
@@ -170,6 +223,10 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
         return true;
     } else if (valid_symbols[IMMEDIATE_COMMAND_START] && lexer->lookahead == '`') {
         lexer->result_symbol = IMMEDIATE_COMMAND_START;
+        return true;
+    }
+
+    if (valid_symbols[BINARY_TILDE] && scan_binary_tilde(lexer)) {
         return true;
     }
 

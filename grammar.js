@@ -177,6 +177,7 @@ module.exports = grammar({
     $._end_cmd,
     $._end_str,
     $._import_from_current_module,
+    $._binary_tilde,
   ],
 
   conflicts: $ => [
@@ -823,7 +824,9 @@ module.exports = grammar({
         // ~ has same precedence as = in Julia (both 1), but must be above
         // PREC.array (-1) so that [0 ~ expr, ...] parses as vector with
         // binary ~ elements rather than matrix with unary ~ elements.
-        [prec.right, 0, $._tilde_operator],
+        // Uses external scanner _binary_tilde for whitespace sensitivity:
+        // `a ~ b` and `a~b` are binary, `a ~b` is unary (Julia's rule).
+        [prec.right, 0, $._binary_tilde],
         [prec.right, PREC.pair, $._pair_operator],
         [prec.right, PREC.arrow, $._arrow_operator],
         [prec.left, PREC.lazy_or, $._lazy_or_operator],
