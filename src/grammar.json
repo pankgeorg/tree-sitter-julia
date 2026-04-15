@@ -4071,6 +4071,10 @@
               {
                 "type": "SYMBOL",
                 "name": "adjoint_expression"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "parenthesized_expression"
               }
             ]
           },

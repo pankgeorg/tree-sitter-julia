@@ -930,6 +930,7 @@ module.exports = grammar({
         $.integer_literal,
         $.float_literal,
         $.adjoint_expression,
+        $.parenthesized_expression, // (2//3)x, (2)x
       ),
       $._primary_expression,
     )),
