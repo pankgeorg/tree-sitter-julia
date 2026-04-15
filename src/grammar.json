@@ -3199,6 +3199,10 @@
                       },
                       {
                         "type": "STRING",
+                        "value": "export"
+                      },
+                      {
+                        "type": "STRING",
                         "value": "const"
                       },
                       {
@@ -3216,6 +3220,54 @@
                       {
                         "type": "STRING",
                         "value": "public"
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "in"
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "isa"
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "where"
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "function"
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "macro"
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "return"
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "do"
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "begin"
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "type"
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "outer"
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "as"
+                      },
+                      {
+                        "type": "STRING",
+                        "value": "nothing"
                       }
                     ]
                   }
@@ -4980,6 +5032,10 @@
               },
               {
                 "type": "STRING",
+                "value": "export"
+              },
+              {
+                "type": "STRING",
                 "value": "const"
               },
               {
@@ -4997,6 +5053,54 @@
               {
                 "type": "STRING",
                 "value": "public"
+              },
+              {
+                "type": "STRING",
+                "value": "in"
+              },
+              {
+                "type": "STRING",
+                "value": "isa"
+              },
+              {
+                "type": "STRING",
+                "value": "where"
+              },
+              {
+                "type": "STRING",
+                "value": "function"
+              },
+              {
+                "type": "STRING",
+                "value": "macro"
+              },
+              {
+                "type": "STRING",
+                "value": "return"
+              },
+              {
+                "type": "STRING",
+                "value": "do"
+              },
+              {
+                "type": "STRING",
+                "value": "begin"
+              },
+              {
+                "type": "STRING",
+                "value": "type"
+              },
+              {
+                "type": "STRING",
+                "value": "outer"
+              },
+              {
+                "type": "STRING",
+                "value": "as"
+              },
+              {
+                "type": "STRING",
+                "value": "nothing"
               }
             ]
           },

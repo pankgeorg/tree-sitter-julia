@@ -124,11 +124,26 @@ const KEYWORDS = choice(
   'continue',
   'using',
   'import',
+  'export',
   'const',
   'global',
   'local',
   'end',
   'public',
+  // Additional keywords that Julia allows as :keyword symbols
+  // and as string macro suffixes (e.g., r"regex"in)
+  'in',
+  'isa',
+  'where',
+  'function',
+  'macro',
+  'return',
+  'do',
+  'begin',
+  'type',
+  'outer',
+  'as',
+  'nothing',
 );
 
 module.exports = grammar({
