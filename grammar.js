@@ -39,6 +39,10 @@ PREC.assign = -2;
 PREC.stmt = -3;
 PREC.macro_arg = -4;
 
+// Julia operators can have subscript/superscript suffixes: +₁, <ₑ, →ₜ, etc.
+// U+1D62-U+1D6A (ᵢ-ᵪ), U+2070-U+209C (⁰-ₜ) minus gaps.
+const OPERATOR_SUFFIX = /[\u1D62-\u1D6A\u2070\u2071\u2074-\u207F\u2080-\u209C]*/;
+
 const OPERATORS = {
   assignment: `
     += -= *= /= //= \\= ^= %= <<= >>= >>>= |= &=
@@ -492,6 +496,7 @@ module.exports = grammar({
       choice(
         $.identifier,
         $._scoped_identifier,
+        $.macro_identifier, // import ..@symcheck
       ),
     ),
 
@@ -1279,7 +1284,8 @@ function sep1(separator, rule) {
  */
 function addDot(operatorString) {
   const operators = operatorString.trim().split(/\s+/);
-  return token(seq(optional('.'), operators.length > 1 ? choice(...operators) : operators[0]));
+  const op = operators.length > 1 ? choice(...operators) : operators[0];
+  return token(seq(optional('.'), op, OPERATOR_SUFFIX));
 }
 
 /**
