@@ -311,7 +311,7 @@ module.exports = grammar({
 
     signature: $ => prec(PREC.stmt, choice(
       $.identifier, // zero-method definition
-      $.prefixed_string_literal, // var"..." zero-method definition
+      $.var_identifier, // var"..." zero-method definition
       $.call_expression,
       alias($.tuple_expression, $.argument_list), // anonymous function
       $.typed_expression,
@@ -481,7 +481,7 @@ module.exports = grammar({
       $.macro_identifier,
       $.operator,
       $.interpolation_expression,
-      $.prefixed_string_literal, // var"..."
+      $.var_identifier,
       parenthesize($._exportable),
     ),
 
@@ -901,7 +901,7 @@ module.exports = grammar({
       $.operator,
       alias($._syntactic_operator, $.operator),
       alias($._scoped_identifier, $.field_expression),
-      $.prefixed_string_literal, // @var"..."
+      $.var_identifier, // @var"..."
     )),
 
     _scoped_identifier: $ => seq(
@@ -1101,6 +1101,24 @@ module.exports = grammar({
       ),
       optional(field('suffix', $._string_macro_suffix)),
     )),
+
+    // var"..." non-standard identifier (only 'var' prefix, not any identifier)
+    var_identifier: $ => seq(
+      'var',
+      $._immediate_string_start,
+      choice(
+        seq(
+          $._delimiter_str_1,
+          repeat(choice(alias($._content_str_1_raw, $.content), $.escape_sequence)),
+          $._end_str,
+        ),
+        seq(
+          $._delimiter_str_3,
+          repeat(choice(alias($._content_str_3_raw, $.content), $.escape_sequence)),
+          $._end_str,
+        ),
+      ),
+    ),
 
     // String/command macro suffixes: r"regex"i, x"s"end, x"s"2
     _string_macro_suffix: $ => choice(
