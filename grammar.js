@@ -628,11 +628,26 @@ module.exports = grammar({
 
     matrix_row: $ => repeat1(prec(PREC.array, $._bracket_form)),
 
-    vector_expression: $ => seq(
-      '[',
-      sep(',', $._bracket_form),
-      optional(','),
-      ']',
+    vector_expression: $ => choice(
+      // Vector with parameters: comma-separated elements, then ; params
+      // [a, b; c] → vect(a, b, parameters(c))
+      // Requires at least one comma before ; (otherwise it's vcat/matrix).
+      // Used by JuMP: @variable(model, x[i=1:3, j=1:3; isodd(i)])
+      seq(
+        '[',
+        $._bracket_form,
+        repeat1(seq(',', $._bracket_form)),
+        $._semicolon,
+        sep(',', $._bracket_form),
+        ']',
+      ),
+      // Regular vector: comma-separated
+      seq(
+        '[',
+        sep(',', $._bracket_form),
+        optional(','),
+        ']',
+      ),
     ),
 
     parenthesized_expression: $ => prec.dynamic(1, parenthesize(
@@ -987,10 +1002,10 @@ module.exports = grammar({
       ].join('');
 
       // Sc (Currency Symbol) covers €, £, ¥, ₹, ₿, etc.
-      // So (Other Symbol) covers emoji and misc symbols — Julia accepts most So as identifiers.
-      // Adds ~19MB to parser.c source (compiled binary impact is much smaller).
       // Exclude $ (U+0024) from Sc — it's the interpolation operator, not an identifier.
-      const start = `[_\\p{XID_Start}\\p{Sc}\\p{So}${validSmSymbols}&&[^0-9#*$]]`;
+      // Note: emoji (\p{So}) NOT included here — it breaks token.immediate(KEYWORDS)
+      // for :where, :in, :isa quoted symbols. Emoji support needs external scanner.
+      const start = `[_\\p{XID_Start}\\p{Sc}${validSmSymbols}&&[^0-9#*$]]`;
       const rest = `[^"'\`\\s\\.\\-\\[\\]${nonIdentifierCharacters}]*`;
       return new RegExp(start + rest);
     },
