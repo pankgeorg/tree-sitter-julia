@@ -21,10 +21,17 @@ Hard problems that need architectural changes. Documented here with full context
 - `prec.dynamic(-1)` on `compound_statement` — no effect, GLR resolves at different levels
 - `prec.dynamic(1)` on the alias — no effect
 
-**Possible approaches**:
-1. **Separate `_bracket_expression`** — create a subset of `_expression` that excludes `compound_statement` (and `quote_statement`?), use it in `_bracket_form`. Large refactor affecting many rules.
-2. **External scanner with bracket depth tracking** — scanner maintains a stack of `[` depth. When inside brackets, `begin` produces `BEGIN_IDENTIFIER` token instead of being consumed by keyword rules. Complex state management in scanner.c (need serialize/deserialize).
-3. **Accept limitation** — `a[begin:end]` works, `a[begin+1:end]` doesn't. Users can write `a[(begin)+1:end]` as workaround (though this also fails currently).
+**Attempted approaches**:
+
+1. **`prec(-1, alias('begin', $.identifier))` in `_primary_expression`** — helps `a[begin]` and `a[begin:end]` but not arithmetic. The `_primary_expression` match can't extend into `binary_expression` because `compound_statement` at the `_expression` level wins the GLR race.
+
+2. **`prec.dynamic` on `_bracket_form` + compound_statement** — adding `prec.dynamic(10, alias('begin', $.identifier))` to `_bracket_form` with `prec.dynamic(-10)` on `compound_statement` WORKS for indexing but BREAKS `begin...end` blocks inside array literals `[begin; 1; end]`, function calls `f(begin; 1; end)`, and parens `(begin; 1; end)` — because `_bracket_form` is shared across ALL bracket contexts, not just indexing.
+
+3. **Separate `_index_array` with `_index_bracket_form`** — creating index-specific versions of vector/matrix/comprehension rules. Generated but caused 7/70 corpus test failures (matrix, comprehension, field, index, interpolation, adjoint, juxtaposition). The split propagates through too many rules and causes widespread GLR conflicts. Would need to duplicate ALL bracket-related rules which is impractical.
+
+**Remaining possible approaches**:
+1. **External scanner with bracket depth tracking** — scanner maintains a stack of `[` depth AND tracks whether the previous token was `_immediate_bracket`. When inside `x[...]` (indexing), `begin` produces `BEGIN_IDENTIFIER` token. Complex state management (need serialize/deserialize for parser recovery).
+2. **Accept limitation** — `a[begin:end]` works, `a[begin+1:end]` doesn't. The 4 affected files in the focused corpus use `a[(begin+1):end]` which is a niche pattern.
 
 ## Emoji in space-separated macro arguments
 
