@@ -918,6 +918,7 @@ module.exports = grammar({
         $.identifier,
         alias($.tuple_expression, $.argument_list),
         $.typed_expression,
+        $.interpolation_expression, // :($c -> $b) in metaprogramming
       ),
       '->',
       $._bracket_form,

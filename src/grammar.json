@@ -4024,6 +4024,10 @@
               {
                 "type": "SYMBOL",
                 "name": "typed_expression"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "interpolation_expression"
               }
             ]
           },
