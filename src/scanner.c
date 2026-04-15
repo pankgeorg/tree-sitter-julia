@@ -29,6 +29,7 @@ enum TokenType {
     END_STR,
     IMPORT_FROM_CURRENT_MODULE,
     BINARY_TILDE,
+    EMOJI_IDENTIFIER,
 };
 
 void *tree_sitter_julia_external_scanner_create() {
@@ -187,6 +188,84 @@ static bool scan_binary_tilde(TSLexer *lexer) {
     return true;
 }
 
+// Check if a codepoint is a valid Julia identifier character (SMP So symbols).
+// BMP So is handled in the grammar regex; this covers supplementary plane emoji.
+static bool is_smp_so_identifier(uint32_t cp) {
+    return (cp >= 0x1F000 && cp <= 0x1F02B) ||  // Mahjong Tiles
+           (cp >= 0x1F030 && cp <= 0x1F093) ||  // Domino Tiles
+           (cp >= 0x1F0A0 && cp <= 0x1F0F5) ||  // Playing Cards
+           (cp >= 0x1F10D && cp <= 0x1F1AD) ||  // Enclosed Alphanumeric Supp
+           (cp >= 0x1F1E6 && cp <= 0x1F202) ||  // Regional Indicators + Enclosed CJK
+           (cp >= 0x1F210 && cp <= 0x1F23B) ||  // Enclosed CJK contd
+           (cp >= 0x1F240 && cp <= 0x1F248) ||
+           (cp >= 0x1F250 && cp <= 0x1F251) ||
+           (cp >= 0x1F260 && cp <= 0x1F265) ||
+           (cp >= 0x1F300 && cp <= 0x1F3FA) ||  // Misc Symbols & Pictographs
+           (cp >= 0x1F400 && cp <= 0x1F6D7) ||  // Misc Symbols & Pictographs + Emoticons + Transport
+           (cp >= 0x1F6DC && cp <= 0x1F6EC) ||
+           (cp >= 0x1F6F0 && cp <= 0x1F6FC) ||
+           (cp >= 0x1F700 && cp <= 0x1F776) ||  // Alchemical Symbols
+           (cp >= 0x1F77B && cp <= 0x1F7D9) ||
+           (cp >= 0x1F7E0 && cp <= 0x1F7EB) ||
+           (cp >= 0x1F7F0 && cp <= 0x1F7F0) ||
+           (cp >= 0x1F800 && cp <= 0x1F80B) ||  // Supplemental Arrows-C
+           (cp >= 0x1F810 && cp <= 0x1F847) ||
+           (cp >= 0x1F850 && cp <= 0x1F859) ||
+           (cp >= 0x1F860 && cp <= 0x1F887) ||
+           (cp >= 0x1F890 && cp <= 0x1F8AD) ||
+           (cp >= 0x1F8B0 && cp <= 0x1F8BB) ||
+           (cp >= 0x1F8C0 && cp <= 0x1F8C1) ||
+           (cp >= 0x1F900 && cp <= 0x1FA53) ||  // Supplemental Symbols & Pictographs
+           (cp >= 0x1FA60 && cp <= 0x1FA6D) ||
+           (cp >= 0x1FA70 && cp <= 0x1FA7C) ||  // Symbols Extended-A
+           (cp >= 0x1FA80 && cp <= 0x1FA89) ||
+           (cp >= 0x1FA8F && cp <= 0x1FAC6) ||
+           (cp >= 0x1FACE && cp <= 0x1FADC) ||
+           (cp >= 0x1FADF && cp <= 0x1FAE9) ||
+           (cp >= 0x1FAF0 && cp <= 0x1FAF8);
+}
+
+// Scan an emoji identifier (SMP codepoints that are valid Julia identifiers).
+// These can't be in the grammar regex because JS RegExp doesn't support
+// supplementary plane characters without the 'u' flag.
+static bool scan_emoji_identifier(TSLexer *lexer) {
+    if (!is_smp_so_identifier(lexer->lookahead)) return false;
+
+    // Consume the first emoji character
+    lexer->advance(lexer, false);
+    lexer->mark_end(lexer);
+
+    // Continue consuming valid identifier characters (emoji or BMP)
+    // Julia allows mixing: 😄x is a valid identifier
+    while (lexer->lookahead != 0) {
+        uint32_t cp = lexer->lookahead;
+        if (is_smp_so_identifier(cp)) {
+            lexer->advance(lexer, false);
+            lexer->mark_end(lexer);
+            continue;
+        }
+        // Also accept XID_Continue characters (letters, digits, combining marks)
+        // These are handled by the grammar regex for normal identifiers,
+        // but we need them here for emoji continuation (e.g., 😄x, x😄2)
+        if ((cp >= 'a' && cp <= 'z') || (cp >= 'A' && cp <= 'Z') ||
+            (cp >= '0' && cp <= '9') || cp == '_' || cp == '!' ||
+            // Common Unicode identifier chars
+            (cp >= 0x00C0 && cp <= 0x024F) || // Latin Extended
+            (cp >= 0x0370 && cp <= 0x03FF) || // Greek
+            (cp >= 0x0400 && cp <= 0x04FF) || // Cyrillic
+            (cp >= 0x2600 && cp <= 0x27BF))   // BMP So (already in grammar)
+        {
+            lexer->advance(lexer, false);
+            lexer->mark_end(lexer);
+            continue;
+        }
+        break;
+    }
+
+    lexer->result_symbol = EMOJI_IDENTIFIER;
+    return true;
+}
+
 static bool scan_import_from_current_module(TSLexer *lexer) {
     skip_whitespace(lexer);
     if (lexer->lookahead != '.') return false;
@@ -223,6 +302,10 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
         return true;
     } else if (valid_symbols[IMMEDIATE_COMMAND_START] && lexer->lookahead == '`') {
         lexer->result_symbol = IMMEDIATE_COMMAND_START;
+        return true;
+    }
+
+    if (valid_symbols[EMOJI_IDENTIFIER] && scan_emoji_identifier(lexer)) {
         return true;
     }
 

@@ -178,6 +178,7 @@ module.exports = grammar({
     $._end_str,
     $._import_from_current_module,
     $._binary_tilde,
+    $._emoji_identifier,
   ],
 
   conflicts: $ => [
@@ -562,6 +563,7 @@ module.exports = grammar({
       prec(-1, alias('primitive', $.identifier)), // contextual: only keyword in `primitive type`
       prec(-1, alias('abstract', $.identifier)),  // contextual: only keyword in `abstract type`
       prec(-1, alias('mutable', $.identifier)),   // contextual: only keyword in `mutable struct`
+      alias($._emoji_identifier, $.identifier),    // SMP emoji identifiers via external scanner
     ),
 
     _array: $ => choice(
@@ -1001,11 +1003,14 @@ module.exports = grammar({
         '℮',         // U+212E
       ].join('');
 
+      // So (Other Symbol) ranges safe for identifiers.
+      // Only BMP ranges — SMP emoji (U+1F000+) needs external scanner
+      // because JS RegExp without 'u' flag can't handle supplementary plane.
+      const soSymbols = '\\u2600-\\u266E\\u2670-\\u27BF';
+
       // Sc (Currency Symbol) covers €, £, ¥, ₹, ₿, etc.
       // Exclude $ (U+0024) from Sc — it's the interpolation operator, not an identifier.
-      // Note: emoji (\p{So}) NOT included here — it breaks token.immediate(KEYWORDS)
-      // for :where, :in, :isa quoted symbols. Emoji support needs external scanner.
-      const start = `[_\\p{XID_Start}\\p{Sc}${validSmSymbols}&&[^0-9#*$]]`;
+      const start = `[_\\p{XID_Start}\\p{Sc}${soSymbols}${validSmSymbols}&&[^0-9#*$]]`;
       const rest = `[^"'\`\\s\\.\\-\\[\\]${nonIdentifierCharacters}]*`;
       return new RegExp(start + rest);
     },
