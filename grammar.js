@@ -671,7 +671,7 @@ module.exports = grammar({
         $._bracket_form,
         $.generator,
       )),
-      optional(','),
+      optional(choice(',', $._semicolon)),
     ),
 
     curly_expression: $ => choice(
