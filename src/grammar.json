@@ -3266,6 +3266,32 @@
       "members": [
         {
           "type": "PREC_RIGHT",
+          "value": -2,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "_expression"
+              },
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_tilde_operator"
+                },
+                "named": true,
+                "value": "operator"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_expression"
+              }
+            ]
+          }
+        },
+        {
+          "type": "PREC_RIGHT",
           "value": 11,
           "content": {
             "type": "SEQ",
@@ -3859,17 +3885,8 @@
           {
             "type": "ALIAS",
             "content": {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "_assignment_operator"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "_tilde_operator"
-                }
-              ]
+              "type": "SYMBOL",
+              "name": "_assignment_operator"
             },
             "named": true,
             "value": "operator"
@@ -8251,6 +8268,11 @@
     [
       "parenthesized_expression",
       "tuple_expression"
+    ],
+    [
+      "binary_expression",
+      "unary_expression",
+      "operator"
     ]
   ],
   "precedences": [],

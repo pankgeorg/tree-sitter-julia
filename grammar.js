@@ -169,6 +169,7 @@ module.exports = grammar({
     [$.juxtaposition_expression, $._expression],
     [$.matrix_row, $.comprehension_expression], // Comprehensions with newlines
     [$.parenthesized_expression, $.tuple_expression],
+    [$.binary_expression, $.unary_expression, $.operator], // ~ is both unary and binary
   ],
 
   supertypes: $ => [
@@ -803,6 +804,7 @@ module.exports = grammar({
 
     binary_expression: $ => {
       const table = [
+        [prec.right, PREC.assign, $._tilde_operator],
         [prec.right, PREC.pair, $._pair_operator],
         [prec.right, PREC.arrow, $._arrow_operator],
         [prec.left, PREC.lazy_or, $._lazy_or_operator],
@@ -883,7 +885,7 @@ module.exports = grammar({
 
     compound_assignment_expression: $ => prec.right(PREC.assign, seq(
       $._primary_expression,
-      alias(choice($._assignment_operator, $._tilde_operator), $.operator),
+      alias($._assignment_operator, $.operator),
       $._expression,
     )),
 
