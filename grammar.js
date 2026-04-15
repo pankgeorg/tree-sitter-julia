@@ -559,6 +559,9 @@ module.exports = grammar({
       $.interpolation_expression,
       $.quote_expression,
       prec(-1, alias('public', $.identifier)), // Julia 1.11: contextual keyword
+      prec(-1, alias('primitive', $.identifier)), // contextual: only keyword in `primitive type`
+      prec(-1, alias('abstract', $.identifier)),  // contextual: only keyword in `abstract type`
+      prec(-1, alias('mutable', $.identifier)),   // contextual: only keyword in `mutable struct`
     ),
 
     _array: $ => choice(
