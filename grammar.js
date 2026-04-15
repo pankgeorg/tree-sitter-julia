@@ -311,6 +311,7 @@ module.exports = grammar({
 
     signature: $ => prec(PREC.stmt, choice(
       $.identifier, // zero-method definition
+      $.prefixed_string_literal, // var"..." zero-method definition
       $.call_expression,
       alias($.tuple_expression, $.argument_list), // anonymous function
       $.typed_expression,
@@ -480,6 +481,7 @@ module.exports = grammar({
       $.macro_identifier,
       $.operator,
       $.interpolation_expression,
+      $.prefixed_string_literal, // var"..."
       parenthesize($._exportable),
     ),
 
@@ -899,6 +901,7 @@ module.exports = grammar({
       $.operator,
       alias($._syntactic_operator, $.operator),
       alias($._scoped_identifier, $.field_expression),
+      $.prefixed_string_literal, // @var"..."
     )),
 
     _scoped_identifier: $ => seq(

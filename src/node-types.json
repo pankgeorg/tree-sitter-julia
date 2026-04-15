@@ -957,6 +957,10 @@
         {
           "type": "operator",
           "named": true
+        },
+        {
+          "type": "prefixed_string_literal",
+          "named": true
         }
       ]
     }
@@ -1388,6 +1392,10 @@
         {
           "type": "operator",
           "named": true
+        },
+        {
+          "type": "prefixed_string_literal",
+          "named": true
         }
       ]
     }
@@ -1414,6 +1422,10 @@
         },
         {
           "type": "operator",
+          "named": true
+        },
+        {
+          "type": "prefixed_string_literal",
           "named": true
         },
         {
@@ -1453,6 +1465,10 @@
         },
         {
           "type": "operator",
+          "named": true
+        },
+        {
+          "type": "prefixed_string_literal",
           "named": true
         },
         {
@@ -1853,6 +1869,10 @@
         {
           "type": "operator",
           "named": true
+        },
+        {
+          "type": "prefixed_string_literal",
+          "named": true
         }
       ]
     }
@@ -2248,6 +2268,10 @@
         {
           "type": "operator",
           "named": true
+        },
+        {
+          "type": "prefixed_string_literal",
+          "named": true
         }
       ]
     }
@@ -2407,6 +2431,10 @@
         {
           "type": "operator",
           "named": true
+        },
+        {
+          "type": "prefixed_string_literal",
+          "named": true
         }
       ]
     }
@@ -2429,6 +2457,10 @@
         },
         {
           "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "prefixed_string_literal",
           "named": true
         },
         {
@@ -2888,6 +2920,10 @@
         },
         {
           "type": "operator",
+          "named": true
+        },
+        {
+          "type": "prefixed_string_literal",
           "named": true
         },
         {

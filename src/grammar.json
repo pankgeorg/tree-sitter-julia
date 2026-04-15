@@ -634,6 +634,10 @@
           },
           {
             "type": "SYMBOL",
+            "name": "prefixed_string_literal"
+          },
+          {
+            "type": "SYMBOL",
             "name": "call_expression"
           },
           {
@@ -1527,6 +1531,10 @@
         {
           "type": "SYMBOL",
           "name": "interpolation_expression"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "prefixed_string_literal"
         },
         {
           "type": "SEQ",
@@ -3929,6 +3937,10 @@
               },
               "named": true,
               "value": "field_expression"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "prefixed_string_literal"
             }
           ]
         }
