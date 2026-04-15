@@ -3266,7 +3266,7 @@
       "members": [
         {
           "type": "PREC_RIGHT",
-          "value": -2,
+          "value": 0,
           "content": {
             "type": "SEQ",
             "members": [
@@ -8270,9 +8270,12 @@
       "tuple_expression"
     ],
     [
-      "binary_expression",
-      "unary_expression",
-      "operator"
+      "_bracket_form",
+      "binary_expression"
+    ],
+    [
+      "open_tuple",
+      "binary_expression"
     ]
   ],
   "precedences": [],

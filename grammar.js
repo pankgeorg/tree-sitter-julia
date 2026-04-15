@@ -169,7 +169,8 @@ module.exports = grammar({
     [$.juxtaposition_expression, $._expression],
     [$.matrix_row, $.comprehension_expression], // Comprehensions with newlines
     [$.parenthesized_expression, $.tuple_expression],
-    [$.binary_expression, $.unary_expression, $.operator], // ~ is both unary and binary
+    [$._bracket_form, $.binary_expression], // ~ in brackets: binary wins over matrix element boundary
+    [$.open_tuple, $.binary_expression], // return a, b ~ c: ~ binds b and c
   ],
 
   supertypes: $ => [
@@ -804,7 +805,10 @@ module.exports = grammar({
 
     binary_expression: $ => {
       const table = [
-        [prec.right, PREC.assign, $._tilde_operator],
+        // ~ has same precedence as = in Julia (both 1), but must be above
+        // PREC.array (-1) so that [0 ~ expr, ...] parses as vector with
+        // binary ~ elements rather than matrix with unary ~ elements.
+        [prec.right, 0, $._tilde_operator],
         [prec.right, PREC.pair, $._pair_operator],
         [prec.right, PREC.arrow, $._arrow_operator],
         [prec.left, PREC.lazy_or, $._lazy_or_operator],
