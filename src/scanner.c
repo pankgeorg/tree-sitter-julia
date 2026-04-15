@@ -230,6 +230,11 @@ static bool is_smp_so_identifier(uint32_t cp) {
 // These can't be in the grammar regex because JS RegExp doesn't support
 // supplementary plane characters without the 'u' flag.
 static bool scan_emoji_identifier(TSLexer *lexer) {
+    // Skip whitespace — external scanner is called before extras consumption
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t' ||
+           lexer->lookahead == '\n' || lexer->lookahead == '\r') {
+        lexer->advance(lexer, true);
+    }
     if (!is_smp_so_identifier(lexer->lookahead)) return false;
 
     // Consume the first emoji character

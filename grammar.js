@@ -801,6 +801,7 @@ module.exports = grammar({
         $.float_literal,
         $._string,
         $.identifier,
+        alias($._emoji_identifier, $.identifier), // :👍
         $.operator,
         seq($._immediate_brace, $.curly_expression),
         seq($._immediate_bracket, $._array),
@@ -1018,7 +1019,10 @@ module.exports = grammar({
       // So (Other Symbol) ranges safe for identifiers.
       // Only BMP ranges — SMP emoji (U+1F000+) needs external scanner
       // because JS RegExp without 'u' flag can't handle supplementary plane.
-      const soSymbols = '\\u2600-\\u266E\\u2670-\\u27BF';
+      // BMP So ranges: selective Misc Technical + Misc Symbols + Dingbats.
+      // Full U+2300-U+23FF breaks token.immediate(KEYWORDS) for :where/:in.
+      // U+2310-U+231B covers ⌐ through ⌛ (hourglass) safely.
+      const soSymbols = '\\u2310-\\u231B\\u2600-\\u266E\\u2670-\\u27BF';
 
       // Sc (Currency Symbol) covers €, £, ¥, ₹, ₿, etc.
       // Exclude $ (U+0024) from Sc — it's the interpolation operator, not an identifier.
