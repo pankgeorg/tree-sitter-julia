@@ -1880,17 +1880,13 @@
           }
         },
         {
-          "type": "PREC",
-          "value": -1,
+          "type": "ALIAS",
           "content": {
-            "type": "ALIAS",
-            "content": {
-              "type": "STRING",
-              "value": "begin"
-            },
-            "named": true,
-            "value": "identifier"
-          }
+            "type": "SYMBOL",
+            "name": "_begin_identifier"
+          },
+          "named": true,
+          "value": "identifier"
         },
         {
           "type": "ALIAS",
@@ -8679,6 +8675,10 @@
     {
       "type": "SYMBOL",
       "name": "_emoji_identifier"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_begin_identifier"
     }
   ],
   "inline": [

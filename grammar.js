@@ -183,6 +183,7 @@ module.exports = grammar({
     $._import_from_current_module,
     $._binary_tilde,
     $._emoji_identifier,
+    $._begin_identifier,
   ],
 
   conflicts: $ => [
@@ -567,7 +568,7 @@ module.exports = grammar({
       prec(-1, alias('primitive', $.identifier)), // contextual: only keyword in `primitive type`
       prec(-1, alias('abstract', $.identifier)),  // contextual: only keyword in `abstract type`
       prec(-1, alias('mutable', $.identifier)),   // contextual: only keyword in `mutable struct`
-      prec(-1, alias('begin', $.identifier)),     // contextual: identifier in indexing a[begin+1:end]
+      alias($._begin_identifier, $.identifier),    // begin as identifier via external scanner (a[begin+1:end])
       alias($._emoji_identifier, $.identifier),    // SMP emoji identifiers via external scanner
     ),
 

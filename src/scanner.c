@@ -30,6 +30,7 @@ enum TokenType {
     IMPORT_FROM_CURRENT_MODULE,
     BINARY_TILDE,
     EMOJI_IDENTIFIER,
+    BEGIN_IDENTIFIER,
 };
 
 void *tree_sitter_julia_external_scanner_create() {
@@ -266,6 +267,62 @@ static bool scan_emoji_identifier(TSLexer *lexer) {
     return true;
 }
 
+// Match "begin" as an identifier when followed by an operator or bracket closer.
+// Julia treats begin/end as identifiers inside x[...] indexing.
+// The scanner fires BEFORE the keyword rule, so if we match, compound_statement
+// never sees "begin".
+//
+// Heuristic: "begin" followed by +, -, *, /, ^, :, ,, ], ), ., >, <, =, !, &, |
+// or space-then-operator is an identifier. Followed by ; or newline or end-of-input,
+// it's a keyword (compound_statement).
+static bool scan_begin_identifier(TSLexer *lexer) {
+    // Skip whitespace (the scanner is called at raw input)
+    while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+        lexer->advance(lexer, true);
+    }
+
+    // Match "begin" literally
+    const char *keyword = "begin";
+    for (int i = 0; keyword[i]; i++) {
+        if (lexer->lookahead != (uint32_t)keyword[i]) return false;
+        lexer->advance(lexer, false);
+    }
+
+    // Check what follows "begin" — must not be an identifier continuation char
+    uint32_t next = lexer->lookahead;
+    if ((next >= 'a' && next <= 'z') || (next >= 'A' && next <= 'Z') ||
+        (next >= '0' && next <= '9') || next == '_' || next == '!') {
+        return false;  // "beginning", "begin_x", etc. — not the keyword
+    }
+
+    // Mark end right after "begin" (before any trailing whitespace)
+    lexer->mark_end(lexer);
+
+    // Now decide: is this begin-as-identifier or begin-as-keyword?
+    // Skip spaces after "begin" to see the next meaningful token.
+    while (next == ' ' || next == '\t') {
+        lexer->advance(lexer, false);
+        next = lexer->lookahead;
+    }
+
+    // Identifier context: followed by operators, closers, or colon
+    if (next == '+' || next == '-' || next == '*' || next == '/' ||
+        next == '^' || next == '%' || next == '\\' ||
+        next == ':' || next == ',' || next == ']' || next == ')' ||
+        next == '.' || next == '>' || next == '<' || next == '=' ||
+        next == '!' || next == '&' || next == '|' ||
+        next == 0x2260 || // ≠
+        next == 0x2264 || // ≤
+        next == 0x2265)   // ≥
+    {
+        lexer->result_symbol = BEGIN_IDENTIFIER;
+        return true;
+    }
+
+    // Keyword context: followed by ; newline, end-of-input, or a letter (begin x end)
+    return false;
+}
+
 static bool scan_import_from_current_module(TSLexer *lexer) {
     skip_whitespace(lexer);
     if (lexer->lookahead != '.') return false;
@@ -302,6 +359,10 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
         return true;
     } else if (valid_symbols[IMMEDIATE_COMMAND_START] && lexer->lookahead == '`') {
         lexer->result_symbol = IMMEDIATE_COMMAND_START;
+        return true;
+    }
+
+    if (valid_symbols[BEGIN_IDENTIFIER] && scan_begin_identifier(lexer)) {
         return true;
     }
 
