@@ -986,11 +986,11 @@ module.exports = grammar({
         '℮',         // U+212E
       ].join('');
 
-      // Emojis are valid Julia identifiers but unsupported due to exploding parser size
-      // todo(clason): check if regex can be optimized
       // Sc (Currency Symbol) covers €, £, ¥, ₹, ₿, etc.
+      // So (Other Symbol) covers emoji and misc symbols — Julia accepts most So as identifiers.
+      // Adds ~19MB to parser.c source (compiled binary impact is much smaller).
       // Exclude $ (U+0024) from Sc — it's the interpolation operator, not an identifier.
-      const start = `[_\\p{XID_Start}\\p{Sc}${validSmSymbols}&&[^0-9#*$]]`;
+      const start = `[_\\p{XID_Start}\\p{Sc}\\p{So}${validSmSymbols}&&[^0-9#*$]]`;
       const rest = `[^"'\`\\s\\.\\-\\[\\]${nonIdentifierCharacters}]*`;
       return new RegExp(start + rest);
     },
