@@ -270,7 +270,6 @@ module.exports = grammar({
       $.operator,
       $.integer_literal,
       $.float_literal,
-      prec(-1, alias('begin', $.identifier)),
     ),
 
     // Definitions
@@ -568,6 +567,7 @@ module.exports = grammar({
       prec(-1, alias('primitive', $.identifier)), // contextual: only keyword in `primitive type`
       prec(-1, alias('abstract', $.identifier)),  // contextual: only keyword in `abstract type`
       prec(-1, alias('mutable', $.identifier)),   // contextual: only keyword in `mutable struct`
+      prec(-1, alias('begin', $.identifier)),     // contextual: identifier in indexing a[begin+1:end]
       alias($._emoji_identifier, $.identifier),    // SMP emoji identifiers via external scanner
     ),
 
