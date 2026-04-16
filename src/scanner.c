@@ -31,6 +31,7 @@ enum TokenType {
     BINARY_TILDE,
     EMOJI_IDENTIFIER,
     BEGIN_IDENTIFIER,
+    IDENT_TAIL,
 };
 
 void *tree_sitter_julia_external_scanner_create() {
@@ -349,6 +350,62 @@ static bool scan_import_from_current_module(TSLexer *lexer) {
     return true;
 }
 
+// Mirror JuliaSyntax's lex_identifier logic for '!' handling:
+// '!' is an identifier char UNLESS followed by '='. This lets `foo!bar` and
+// `permute!!` be valid identifiers while `a!=b` parses as `a` + `!=`.
+//
+// This scanner fires immediately after a _word_identifier (no whitespace).
+// It matches one or more chars where each is either:
+//   - '!' not followed by '='
+//   - A normal identifier-continuation char (ASCII letter/digit/underscore)
+// We only handle ASCII continuation here — Unicode cases are already handled
+// by the main regex in _word_identifier. The external scanner only runs when
+// the main token can't consume more (because of the '!').
+static bool is_ascii_ident_cont(uint32_t c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+           (c >= '0' && c <= '9') || c == '_';
+}
+
+static bool scan_ident_tail(TSLexer *lexer) {
+    // Must start with '!'. No whitespace skipping — scanner fires as
+    // token.immediate after the preceding identifier body.
+    if (lexer->lookahead != '!') return false;
+
+    bool consumed_any = false;
+    while (lexer->lookahead != 0) {
+        uint32_t c = lexer->lookahead;
+        if (c == '!') {
+            // Peek next: if '=', stop here (don't consume this '!' — it's !=)
+            lexer->advance(lexer, false);
+            if (lexer->lookahead == '=') {
+                // We already advanced past '!'. This is problematic because
+                // we can't un-advance. But tree-sitter lets us mark_end at
+                // the last good position. If we haven't consumed_any yet
+                // (this is the first '!'), return false so '!=' can match.
+                // If we have consumed some chars, mark_end BEFORE this '!'
+                // by returning without calling mark_end again — actually,
+                // since we already mark_end after each consumption below,
+                // the token length is correct up to before this '!'.
+                if (!consumed_any) return false;
+                return true;
+            }
+            consumed_any = true;
+            lexer->mark_end(lexer);
+            continue;
+        }
+        if (is_ascii_ident_cont(c)) {
+            if (!consumed_any) return false; // must start with '!'
+            lexer->advance(lexer, false);
+            consumed_any = true;
+            lexer->mark_end(lexer);
+            continue;
+        }
+        // Some other char — stop here
+        break;
+    }
+    return consumed_any;
+}
+
 bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
     if (valid_symbols[IMMEDIATE_PAREN] && lexer->lookahead == '(') {
         lexer->result_symbol = IMMEDIATE_PAREN;
@@ -364,6 +421,11 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
         return true;
     } else if (valid_symbols[IMMEDIATE_COMMAND_START] && lexer->lookahead == '`') {
         lexer->result_symbol = IMMEDIATE_COMMAND_START;
+        return true;
+    }
+
+    if (valid_symbols[IDENT_TAIL] && scan_ident_tail(lexer)) {
+        lexer->result_symbol = IDENT_TAIL;
         return true;
     }
 

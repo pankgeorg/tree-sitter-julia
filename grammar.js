@@ -241,6 +241,7 @@ module.exports = grammar({
     $._binary_tilde,
     $._emoji_identifier,
     $._begin_identifier,
+    $._ident_tail,
   ],
 
   conflicts: $ => [
@@ -1054,19 +1055,20 @@ module.exports = grammar({
 
     _word_identifier: _ => identifierStartRest(),
 
-    // Identifiers may end with one or more '!' (push!, sort!, permute!!).
-    // The '!' is matched separately via token.immediate so it competes
-    // at the lexer level with '!=' and '!=='. Longest-match means:
-    //   push!(x)     → push + ! → identifier push!  (! wins, next is '(')
-    //   permute!!(x) → permute + ! + ! → identifier permute!! (both ! consumed)
-    //   a!=b         → a + !=   → identifier a       (!= wins over ! at lex)
+    // Julia identifiers may contain '!' anywhere except at the start,
+    // UNLESS the '!' is followed by '=' (which starts the `!=` operator).
+    // Examples: push!, sort!, permute!!, foo!bar, _rs_setindex!_err.
     //
-    // NOTE: '!' in the middle of identifiers (foo!bar, _rs_setindex!_err)
-    // isn't supported. Allowing it via repeat(seq(!, optional(middle)))
-    // caused parser bloat and broke `:elseif` quoted symbols. Such names
-    // exist but are rare — accept the tradeoff.
+    // The '!'-suffix (one-or-more '!' interleaved with optional ident chars)
+    // is handled by the external scanner token $._ident_tail, which mirrors
+    // JuliaSyntax's lex_identifier logic (tokenize.jl line 1303):
+    //   break when (pc == '!' && ppc == '=') || !is_identifier_char(pc)
+    // This lets '!=' and '!==' win over '!' at the lexer level, so
+    //   a!=b → `a` identifier + `!=` operator
+    //   foo!bar → `foo!bar` identifier
+    //   permute!! → `permute!!` identifier
     identifier: $ => choice(
-      seq($._word_identifier, repeat1(token.immediate('!'))),
+      seq($._word_identifier, $._ident_tail),
       $._word_identifier,
     ),
 
