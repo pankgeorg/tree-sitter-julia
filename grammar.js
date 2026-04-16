@@ -767,7 +767,10 @@ module.exports = grammar({
       ),
     ),
 
-    macrocall_expression: $ => prec.right(seq($._macro_head, optional($.macro_argument_list))),
+    // HIGH precedence: @f a in b should be @f(a in b), not (@f a) in b.
+    // Must outrank PREC.comparison so binary operators can't steal the macro
+    // body. Stays below PREC.dot so @f a.b still parses correctly.
+    macrocall_expression: $ => prec.right(PREC.decl, seq($._macro_head, optional($.macro_argument_list))),
 
     macro_argument_list: $ => prec.left(repeat1(prec(PREC.macro_arg, $._block_form))),
 
