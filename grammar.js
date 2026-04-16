@@ -991,7 +991,10 @@ module.exports = grammar({
         ...Object.values(OPERATORS),
       ].join(' ')
         .trim()
-        .replace(/!/g, '')
+        // Don't remove '!' — it's excluded from identifiers so that `a!=b`
+        // parses as `a != b` (comparison), not `a! = b` (assignment).
+        // Identifiers ending in '!' (push!, sort!) are handled by the
+        // identifier rule via token.immediate('!').
         .replace(/-/g, '')
         .replace(/\\/g, '\\\\')
         .replace(/\s+/g, '');
@@ -1031,7 +1034,15 @@ module.exports = grammar({
       return new RegExp(start + rest);
     },
 
-    identifier: $ => $._word_identifier,
+    // Identifiers may end with '!' (push!, sort!).
+    // The '!' is matched separately via token.immediate so it competes
+    // at the lexer level with '!=' and '!=='. Longest-match means:
+    //   push!(x) → push + ! → identifier push!  (! wins, next is '(')
+    //   a!=b     → a + !=   → identifier a       (!= wins over !)
+    identifier: $ => choice(
+      seq($._word_identifier, token.immediate('!')),
+      $._word_identifier,
+    ),
 
     // Literals
 
