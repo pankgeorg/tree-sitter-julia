@@ -1054,25 +1054,20 @@ module.exports = grammar({
 
     _word_identifier: _ => identifierStartRest(),
 
-    // Identifier continuation after a '!': matches one-or-more identifier
-    // rest characters (no start-char requirement, no '!'). Must be
-    // token.immediate so it attaches directly to the previous '!'.
-    _word_identifier_middle: _ => token.immediate(new RegExp(identifierRest() + '+')),
-
-    // Julia identifiers may contain '!' anywhere except at the start
-    // (e.g. push!, sort!, permute!!, foo!bar, _rs_setindex!_err).
+    // Identifiers may end with one or more '!' (push!, sort!, permute!!).
     // The '!' is matched separately via token.immediate so it competes
     // at the lexer level with '!=' and '!=='. Longest-match means:
     //   push!(x)     → push + ! → identifier push!  (! wins, next is '(')
-    //   permute!!(x) → permute + ! + ! → identifier permute!!
-    //   foo!bar      → foo + ! + bar → identifier foo!bar
+    //   permute!!(x) → permute + ! + ! → identifier permute!! (both ! consumed)
     //   a!=b         → a + !=   → identifier a       (!= wins over ! at lex)
-    identifier: $ => seq(
+    //
+    // NOTE: '!' in the middle of identifiers (foo!bar, _rs_setindex!_err)
+    // isn't supported. Allowing it via repeat(seq(!, optional(middle)))
+    // caused parser bloat and broke `:elseif` quoted symbols. Such names
+    // exist but are rare — accept the tradeoff.
+    identifier: $ => choice(
+      seq($._word_identifier, repeat1(token.immediate('!'))),
       $._word_identifier,
-      repeat(seq(
-        token.immediate('!'),
-        optional($._word_identifier_middle),
-      )),
     ),
 
     // Literals
