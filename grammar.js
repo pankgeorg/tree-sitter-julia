@@ -1052,13 +1052,14 @@ module.exports = grammar({
       return new RegExp(start + rest);
     },
 
-    // Identifiers may end with '!' (push!, sort!).
+    // Identifiers may end with one or more '!' (push!, sort!, permute!!).
     // The '!' is matched separately via token.immediate so it competes
     // at the lexer level with '!=' and '!=='. Longest-match means:
-    //   push!(x) → push + ! → identifier push!  (! wins, next is '(')
-    //   a!=b     → a + !=   → identifier a       (!= wins over !)
+    //   push!(x)     → push + ! → identifier push!  (! wins, next is '(')
+    //   permute!!(x) → permute + ! + ! → identifier permute!! (both ! consumed)
+    //   a!=b         → a + !=   → identifier a       (!= wins over ! at lex)
     identifier: $ => choice(
-      seq($._word_identifier, token.immediate('!')),
+      seq($._word_identifier, repeat1(token.immediate('!'))),
       $._word_identifier,
     ),
 

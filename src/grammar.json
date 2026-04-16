@@ -4337,10 +4337,13 @@
               "name": "_word_identifier"
             },
             {
-              "type": "IMMEDIATE_TOKEN",
+              "type": "REPEAT1",
               "content": {
-                "type": "STRING",
-                "value": "!"
+                "type": "IMMEDIATE_TOKEN",
+                "content": {
+                  "type": "STRING",
+                  "value": "!"
+                }
               }
             }
           ]
