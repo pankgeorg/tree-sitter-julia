@@ -105,6 +105,63 @@ const ESCAPE_SEQUENCE = token(seq(
   ),
 ));
 
+// ─── Identifier regex helpers ────────────────────────────────────
+// '!' is excluded from rest characters so it can be lexed separately
+// (lets '!=' and '!==' win over '!' at the lexer level).
+
+// Characters not allowed anywhere in identifiers.
+function identifierExcluded() {
+  return [
+    '#', '$', ',', ':', ';', '@', '~',
+    '(', ')', '{', '}',
+    ...Object.values(OPERATORS),
+  ].join(' ')
+    .trim()
+    .replace(/-/g, '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\s+/g, '');
+}
+
+// Rest-character class (excluded chars + whitespace/brackets/etc).
+function identifierRest() {
+  return `[^"'\`\\s\\.\\-\\[\\]${identifierExcluded()}]`;
+}
+
+// Full identifier regex: start character + rest characters (zero-or-more).
+// Used as both the _word_identifier rule and the grammar's word property.
+function identifierStartRest() {
+  // Sm (Math Symbol) characters valid as identifier start in Julia.
+  // From jl_id_start_char() in julia_extensions.c.
+  const validSmSymbols = [
+    '°',
+    '∀-∇',       // U+2200-U+2207
+    '∎-∑',       // U+220E-U+2211
+    '∞-∟',       // U+221E-U+221F
+    '∫-∳',       // U+222B-U+2233
+    '⅀-⅄',       // U+2140-U+2144
+    '∿',         // U+223F
+    '⊤-⊥',       // U+22A4-U+22A5
+    '⊾-⊿',       // U+22BE-U+22BF
+    '⋀-⋃',       // U+22C0-U+22C3
+    '◸-◿',       // U+25F8-U+25FF
+    '∠-∢',       // U+2220-U+2222
+    '♯',         // U+266F
+    '℘',         // U+2118
+    '℮',         // U+212E
+  ].join('');
+
+  // So (Other Symbol) ranges safe for identifiers.
+  // Only BMP ranges — SMP emoji (U+1F000+) needs external scanner.
+  // Full U+2300-U+23FF breaks token.immediate(KEYWORDS) for :where/:in.
+  // U+2310-U+231B covers ⌐ through ⌛ (hourglass) safely.
+  const soSymbols = '\\u2310-\\u231B\\u2600-\\u266E\\u2670-\\u27BF';
+
+  // Sc (Currency Symbol) covers €, £, ¥, ₹, ₿, etc.
+  // Exclude $ (U+0024) from Sc — it's the interpolation operator.
+  const start = `[_\\p{XID_Start}\\p{Sc}${soSymbols}${validSmSymbols}&&[^0-9#*$]]`;
+  return new RegExp(start + identifierRest() + '*');
+}
+
 // Keywords that can be quoted. Some still fail depending on the context.
 const KEYWORDS = choice(
   'baremodule',
@@ -995,72 +1052,27 @@ module.exports = grammar({
       ),
     ),
 
-    _word_identifier: _ => {
-      const nonIdentifierCharacters = [
-        '#',
-        '$',
-        ',',
-        ':',
-        ';',
-        '@',
-        '~',
-        '(', ')',
-        '{', '}',
-        ...Object.values(OPERATORS),
-      ].join(' ')
-        .trim()
-        // Don't remove '!' — it's excluded from identifiers so that `a!=b`
-        // parses as `a != b` (comparison), not `a! = b` (assignment).
-        // Identifiers ending in '!' (push!, sort!) are handled by the
-        // identifier rule via token.immediate('!').
-        .replace(/-/g, '')
-        .replace(/\\/g, '\\\\')
-        .replace(/\s+/g, '');
+    _word_identifier: _ => identifierStartRest(),
 
-      // Sm (Math Symbol) characters valid as identifier start in Julia.
-      // From jl_id_start_char() in julia_extensions.c.
-      const validSmSymbols = [
-        '°',
-        '∀-∇',       // U+2200-U+2207
-        '∎-∑',       // U+220E-U+2211
-        '∞-∟',       // U+221E-U+221F
-        '∫-∳',       // U+222B-U+2233
-        '⅀-⅄',       // U+2140-U+2144
-        '∿',         // U+223F
-        '⊤-⊥',       // U+22A4-U+22A5
-        '⊾-⊿',       // U+22BE-U+22BF
-        '⋀-⋃',       // U+22C0-U+22C3
-        '◸-◿',       // U+25F8-U+25FF
-        '∠-∢',       // U+2220-U+2222
-        '♯',         // U+266F
-        '℘',         // U+2118
-        '℮',         // U+212E
-      ].join('');
+    // Identifier continuation after a '!': matches one-or-more identifier
+    // rest characters (no start-char requirement, no '!'). Must be
+    // token.immediate so it attaches directly to the previous '!'.
+    _word_identifier_middle: _ => token.immediate(new RegExp(identifierRest() + '+')),
 
-      // So (Other Symbol) ranges safe for identifiers.
-      // Only BMP ranges — SMP emoji (U+1F000+) needs external scanner
-      // because JS RegExp without 'u' flag can't handle supplementary plane.
-      // BMP So ranges: selective Misc Technical + Misc Symbols + Dingbats.
-      // Full U+2300-U+23FF breaks token.immediate(KEYWORDS) for :where/:in.
-      // U+2310-U+231B covers ⌐ through ⌛ (hourglass) safely.
-      const soSymbols = '\\u2310-\\u231B\\u2600-\\u266E\\u2670-\\u27BF';
-
-      // Sc (Currency Symbol) covers €, £, ¥, ₹, ₿, etc.
-      // Exclude $ (U+0024) from Sc — it's the interpolation operator, not an identifier.
-      const start = `[_\\p{XID_Start}\\p{Sc}${soSymbols}${validSmSymbols}&&[^0-9#*$]]`;
-      const rest = `[^"'\`\\s\\.\\-\\[\\]${nonIdentifierCharacters}]*`;
-      return new RegExp(start + rest);
-    },
-
-    // Identifiers may end with one or more '!' (push!, sort!, permute!!).
+    // Julia identifiers may contain '!' anywhere except at the start
+    // (e.g. push!, sort!, permute!!, foo!bar, _rs_setindex!_err).
     // The '!' is matched separately via token.immediate so it competes
     // at the lexer level with '!=' and '!=='. Longest-match means:
     //   push!(x)     → push + ! → identifier push!  (! wins, next is '(')
-    //   permute!!(x) → permute + ! + ! → identifier permute!! (both ! consumed)
+    //   permute!!(x) → permute + ! + ! → identifier permute!!
+    //   foo!bar      → foo + ! + bar → identifier foo!bar
     //   a!=b         → a + !=   → identifier a       (!= wins over ! at lex)
-    identifier: $ => choice(
-      seq($._word_identifier, repeat1(token.immediate('!'))),
+    identifier: $ => seq(
       $._word_identifier,
+      repeat(seq(
+        token.immediate('!'),
+        optional($._word_identifier_middle),
+      )),
     ),
 
     // Literals
