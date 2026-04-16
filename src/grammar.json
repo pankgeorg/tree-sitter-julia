@@ -1884,6 +1884,32 @@
           }
         },
         {
+          "type": "PREC",
+          "value": -1,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "STRING",
+              "value": "in"
+            },
+            "named": true,
+            "value": "identifier"
+          }
+        },
+        {
+          "type": "PREC",
+          "value": -1,
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "STRING",
+              "value": "isa"
+            },
+            "named": true,
+            "value": "identifier"
+          }
+        },
+        {
           "type": "ALIAS",
           "content": {
             "type": "SYMBOL",
