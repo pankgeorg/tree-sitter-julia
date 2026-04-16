@@ -879,15 +879,25 @@ module.exports = grammar({
       ))));
     },
 
-    unary_expression: $ => prec.right(PREC.prefix, seq(
-      alias(choice(
-        $._tilde_operator,
-        $._type_order_operator,
-        $._unary_operator,
-        $._unary_plus_operator,
-      ), $.operator),
-      $._expression,
-    )),
+    unary_expression: $ => choice(
+      // Regular unary operators at PREC.prefix
+      prec.right(PREC.prefix, seq(
+        alias(choice(
+          $._tilde_operator,
+          $._unary_operator,
+          $._unary_plus_operator,
+        ), $.operator),
+        $._expression,
+      )),
+      // Type-order operators (<:, >:) as unary at LOWER precedence than binary
+      // comparison. This ensures `if S <: U` parses as `if (S <: U)` (binary),
+      // not `if S; <:U; ...` (unary). Unary still wins in contexts with no LHS
+      // like `Vector{<:Number}`.
+      prec.right(PREC.comparison - 1, seq(
+        alias($._type_order_operator, $.operator),
+        $._expression,
+      )),
+    ),
 
     range_expression: $ => prec.left(PREC.colon, seq(
       $._expression,

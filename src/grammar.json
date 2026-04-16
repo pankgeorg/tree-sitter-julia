@@ -3875,43 +3875,66 @@
       ]
     },
     "unary_expression": {
-      "type": "PREC_RIGHT",
-      "value": 25,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "ALIAS",
-            "content": {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "_tilde_operator"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "PREC_RIGHT",
+          "value": 25,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "_tilde_operator"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "_unary_operator"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "_unary_plus_operator"
+                    }
+                  ]
                 },
-                {
+                "named": true,
+                "value": "operator"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_expression"
+              }
+            ]
+          }
+        },
+        {
+          "type": "PREC_RIGHT",
+          "value": 16,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "ALIAS",
+                "content": {
                   "type": "SYMBOL",
                   "name": "_type_order_operator"
                 },
-                {
-                  "type": "SYMBOL",
-                  "name": "_unary_operator"
-                },
-                {
-                  "type": "SYMBOL",
-                  "name": "_unary_plus_operator"
-                }
-              ]
-            },
-            "named": true,
-            "value": "operator"
-          },
-          {
-            "type": "SYMBOL",
-            "name": "_expression"
+                "named": true,
+                "value": "operator"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_expression"
+              }
+            ]
           }
-        ]
-      }
+        }
+      ]
     },
     "range_expression": {
       "type": "PREC_LEFT",
