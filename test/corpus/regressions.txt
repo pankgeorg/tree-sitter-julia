@@ -1,0 +1,499 @@
+;; Regression tests for each grammar fix beyond the aviatesk merge (450ad1b).
+;; Each named test corresponds to one or more commits in git history.
+
+==============================
+public as contextual keyword (18dccd1, ce0f808)
+==============================
+
+public a, b
+public = 1
+
+---
+(source_file
+  (public_statement (identifier) (identifier))
+  (assignment (identifier) (operator) (integer_literal)))
+
+==============================
+trailing comma in tuple destructuring (b3a5fcf)
+==============================
+
+x, = xs
+x, y, = xs
+
+---
+(source_file
+  (assignment (open_tuple (identifier)) (operator) (identifier))
+  (assignment
+    (open_tuple (identifier) (identifier))
+    (operator)
+    (identifier)))
+
+==============================
+expanded Unicode identifier starts (7d9f0f6)
+==============================
+
+x₁ = 1
+α = 2
+β₂ = 3
+
+---
+(source_file
+  (assignment (identifier) (operator) (integer_literal))
+  (assignment (identifier) (operator) (integer_literal))
+  (assignment (identifier) (operator) (integer_literal)))
+
+==============================
+semicolons in brackets and bracescat (469282b)
+==============================
+
+[;]
+{a; b}
+
+---
+(source_file
+  (matrix_expression)
+  (curly_expression
+    (matrix_row (identifier))
+    (matrix_row (identifier))))
+
+==============================
+advanced import paths with quoted operators (53745aa)
+==============================
+
+import A.:+
+
+---
+(source_file
+  (import_statement
+    (import_path
+      (identifier)
+      (quote_expression (operator)))))
+
+==============================
+try without catch or finally (5670fab)
+==============================
+
+try
+    x
+end
+
+---
+(source_file
+  (try_statement
+    (block (identifier))))
+
+==============================
+field access x.? and x.?() (8162ce5)
+==============================
+
+x.?(y)
+
+---
+(source_file
+  (call_expression
+    (field_expression
+      (identifier)
+      (identifier))
+    (argument_list (identifier))))
+
+==============================
+numeric string macro suffixes (2d10774)
+==============================
+
+r"foo"2
+r"foo"x
+
+---
+(source_file
+  (prefixed_string_literal
+    (identifier)
+    (content)
+    (integer_literal))
+  (prefixed_string_literal
+    (identifier)
+    (content)
+    (identifier)))
+
+==============================
+var"..." identifiers (5c34ffa, bc59144)
+==============================
+
+var"x"(y) = 1
+
+---
+(source_file
+  (assignment
+    (call_expression
+      (prefixed_string_literal
+        (identifier)
+        (content))
+      (argument_list (identifier)))
+    (operator)
+    (integer_literal)))
+
+==============================
+binary tilde operator (ebf3dc6, 284d01d)
+==============================
+
+a ~ b
+a~b
+
+---
+(source_file
+  (binary_expression (identifier) (operator) (identifier))
+  (binary_expression (identifier) (operator) (identifier)))
+
+==============================
+:keyword quoted symbols (16f96ff)
+==============================
+
+:function
+:if
+:where
+:in
+:isa
+:elseif
+:else
+:nothing
+
+---
+(source_file
+  (quote_expression (identifier))
+  (quote_expression (identifier))
+  (quote_expression (identifier))
+  (quote_expression (identifier))
+  (quote_expression (identifier))
+  (quote_expression (identifier))
+  (quote_expression (identifier))
+  (quote_expression (identifier)))
+
+==============================
+contextual keyword identifiers (c6935f4)
+==============================
+
+abstract = 1
+mutable = 2
+primitive = 3
+
+---
+(source_file
+  (assignment (identifier) (operator) (integer_literal))
+  (assignment (identifier) (operator) (integer_literal))
+  (assignment (identifier) (operator) (integer_literal)))
+
+==============================
+emoji and So symbols as identifiers (f674fb8, 092d275)
+==============================
+
+x = 😄
+⌛ = 1
+
+---
+(source_file
+  (assignment (identifier) (operator) (identifier))
+  (assignment (identifier) (operator) (integer_literal)))
+
+==============================
+emoji in field expressions (9178927)
+==============================
+
+a.😄
+
+---
+(source_file
+  (field_expression
+    (identifier)
+    (identifier)))
+
+==============================
+emoji in quote expressions (83eb78d)
+==============================
+
+:😄
+:⌛
+
+---
+(source_file
+  (quote_expression (identifier))
+  (quote_expression (identifier)))
+
+==============================
+trailing semicolons in function calls (10735e8, 3040201)
+==============================
+
+f(a;)
+
+---
+(source_file
+  (call_expression
+    (identifier)
+    (argument_list (identifier))))
+
+==============================
+nested interpolation (2d4dbdf)
+==============================
+
+$$a
+
+---
+(source_file
+  (interpolation_expression
+    (interpolation_expression (identifier))))
+
+==============================
+begin as identifier in indexing (ff79a77, 3040201)
+==============================
+
+a[begin]
+a[begin:end]
+a[(begin+1):(end-1)]
+
+---
+(source_file
+  (index_expression
+    (identifier)
+    (vector_expression (identifier)))
+  (index_expression
+    (identifier)
+    (vector_expression
+      (range_expression (identifier) (identifier))))
+  (index_expression
+    (identifier)
+    (vector_expression
+      (range_expression
+        (parenthesized_expression
+          (binary_expression (identifier) (operator) (integer_literal)))
+        (parenthesized_expression
+          (binary_expression (identifier) (operator) (integer_literal)))))))
+
+==============================
+interpolation on LHS of arrow functions (6f2c534)
+==============================
+
+$c -> $b
+
+---
+(source_file
+  (arrow_function_expression
+    (interpolation_expression (identifier))
+    (interpolation_expression (identifier))))
+
+==============================
+parenthesized juxtaposition (db7d120)
+==============================
+
+(2//3)x
+
+---
+(source_file
+  (juxtaposition_expression
+    (parenthesized_expression
+      (binary_expression (integer_literal) (operator) (integer_literal)))
+    (identifier)))
+
+==============================
+array juxtaposition with string macros (46b0b44)
+==============================
+
+[1.0]u"cm"
+
+---
+(source_file
+  (juxtaposition_expression
+    (vector_expression (float_literal))
+    (prefixed_string_literal
+      (identifier)
+      (content))))
+
+==============================
+!= and !== beat identifier-with-bang (b2f824f)
+==============================
+
+a!=b
+a!==b
+x != y
+x !== y
+
+---
+(source_file
+  (binary_expression (identifier) (operator) (identifier))
+  (binary_expression (identifier) (operator) (identifier))
+  (binary_expression (identifier) (operator) (identifier))
+  (binary_expression (identifier) (operator) (identifier)))
+
+==============================
+! as trailing identifier char distinct from != (b2f824f)
+==============================
+
+a! = 1
+push! = f
+
+---
+(source_file
+  (assignment (identifier) (operator) (integer_literal))
+  (assignment (identifier) (operator) (identifier)))
+
+==============================
+binary <: wins over unary when LHS present (a5eec3c)
+==============================
+
+T <: Number
+if S <: U
+    x
+end
+
+---
+(source_file
+  (binary_expression (identifier) (operator) (identifier))
+  (if_statement
+    (binary_expression (identifier) (operator) (identifier))
+    (block (identifier))))
+
+==============================
+unary <: still works in curly type bounds (a5eec3c)
+==============================
+
+Vector{<:Number}
+Dict{<:Int, <:String}
+
+---
+(source_file
+  (parametrized_type_expression
+    (identifier)
+    (curly_expression
+      (unary_expression (operator) (identifier))))
+  (parametrized_type_expression
+    (identifier)
+    (curly_expression
+      (unary_expression (operator) (identifier))
+      (unary_expression (operator) (identifier)))))
+
+==============================
+open macrocall consumes arguments past binary operators (d3cd1aa)
+==============================
+
+@f a in b
+@assert x == y
+@inline function f(x)
+    x
+end
+
+---
+(source_file
+  (macrocall_expression
+    (macro_identifier (identifier))
+    (macro_argument_list
+      (binary_expression (identifier) (operator) (identifier))))
+  (macrocall_expression
+    (macro_identifier (identifier))
+    (macro_argument_list
+      (binary_expression (identifier) (operator) (identifier))))
+  (macrocall_expression
+    (macro_identifier (identifier))
+    (macro_argument_list
+      (function_definition
+        (signature
+          (call_expression
+            (identifier)
+            (argument_list (identifier))))
+        (block (identifier))))))
+
+==============================
+closed macrocall as LHS of binary expression (d3cd1aa)
+==============================
+
+@f(a) + b
+@g(x) * 2
+
+---
+(source_file
+  (binary_expression
+    (macrocall_expression
+      (macro_identifier (identifier))
+      (argument_list (identifier)))
+    (operator)
+    (identifier))
+  (binary_expression
+    (macrocall_expression
+      (macro_identifier (identifier))
+      (argument_list (identifier)))
+    (operator)
+    (integer_literal)))
+
+==============================
+in and isa as contextual function names (5880b1e)
+==============================
+
+!isa(x, T)
+!in(x, y)
+@inline in(a, b) = 1
+
+---
+(source_file
+  (unary_expression
+    (operator)
+    (call_expression
+      (identifier)
+      (argument_list (identifier) (identifier))))
+  (unary_expression
+    (operator)
+    (call_expression
+      (identifier)
+      (argument_list (identifier) (identifier))))
+  (macrocall_expression
+    (macro_identifier (identifier))
+    (macro_argument_list
+      (assignment
+        (call_expression
+          (identifier)
+          (argument_list (identifier) (identifier)))
+        (operator)
+        (integer_literal)))))
+
+==============================
+in and isa still as binary operators (5880b1e)
+==============================
+
+a in b
+x isa Int
+
+---
+(source_file
+  (binary_expression (identifier) (operator) (identifier))
+  (binary_expression (identifier) (operator) (identifier)))
+
+==============================
+identifiers with trailing ! — single and multiple (fd2aae9)
+==============================
+
+push!(x)
+sort!(arr)
+permute!!(a, b)
+
+---
+(source_file
+  (call_expression
+    (identifier)
+    (argument_list (identifier)))
+  (call_expression
+    (identifier)
+    (argument_list (identifier)))
+  (call_expression
+    (identifier)
+    (argument_list (identifier) (identifier))))
+
+==============================
+identifiers with ! in the middle (8dba18d)
+==============================
+
+foo!bar
+a!b!c
+_rs_setindex!_err()
+
+---
+(source_file
+  (identifier)
+  (identifier)
+  (call_expression
+    (identifier)
+    (argument_list)))
