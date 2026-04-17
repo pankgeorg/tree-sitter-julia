@@ -633,6 +633,10 @@
           },
           {
             "type": "SYMBOL",
+            "name": "operator"
+          },
+          {
+            "type": "SYMBOL",
             "name": "call_expression"
           },
           {

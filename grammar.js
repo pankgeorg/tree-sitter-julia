@@ -399,6 +399,7 @@ module.exports = grammar({
       $.identifier, // zero-method definition
       $.var_identifier, // var"..." zero-method definition
       $.interpolation_expression, // function $f end (interpolated name)
+      $.operator, // function ⊇ end (operator-named zero-method def)
       $.call_expression,
       alias($.tuple_expression, $.argument_list), // anonymous function
       $.typed_expression,

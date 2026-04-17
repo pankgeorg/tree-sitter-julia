@@ -2484,6 +2484,10 @@
           "named": true
         },
         {
+          "type": "operator",
+          "named": true
+        },
+        {
           "type": "typed_expression",
           "named": true
         },
