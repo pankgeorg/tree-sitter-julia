@@ -4305,28 +4305,6 @@
               }
             ]
           }
-        },
-        {
-          "type": "PREC_RIGHT",
-          "value": 15,
-          "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "ALIAS",
-                "content": {
-                  "type": "STRING",
-                  "value": "&"
-                },
-                "named": true,
-                "value": "operator"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "_expression"
-              }
-            ]
-          }
         }
       ]
     },

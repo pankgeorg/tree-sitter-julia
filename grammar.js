@@ -1026,12 +1026,6 @@ module.exports = grammar({
         alias($._type_order_operator, $.operator),
         $._expression,
       )),
-      // `&` prefix for ccall pass-by-reference: `&a`, `f(&a)`. Lower prec
-      // so it doesn't shadow binary `&` in `a & b`.
-      prec.right(PREC.comparison - 2, seq(
-        alias('&', $.operator),
-        $._expression,
-      )),
     ),
 
     range_expression: $ => choice(
