@@ -1877,6 +1877,10 @@
         {
           "type": "operator",
           "named": true
+        },
+        {
+          "type": "var_identifier",
+          "named": true
         }
       ]
     }

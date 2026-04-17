@@ -4237,6 +4237,10 @@
               },
               "named": true,
               "value": "field_expression"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "var_identifier"
             }
           ]
         }
