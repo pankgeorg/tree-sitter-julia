@@ -1133,7 +1133,7 @@ module.exports = grammar({
           // External scanner splits `.⋆` tokenization so the `.` here wins
           // over broadcast operator lexing. Falls back to token.immediate('.')
           // for the common case. See scanner.c scan_scope_dot.
-          choice(token.immediate('.'), $._scope_dot),
+          choice(token.immediate('.'), alias($._scope_dot, '.')),
           choice(
             $.identifier,
             $.interpolation_expression,

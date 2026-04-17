@@ -4703,8 +4703,13 @@
                     }
                   },
                   {
-                    "type": "SYMBOL",
-                    "name": "_scope_dot"
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_scope_dot"
+                    },
+                    "named": false,
+                    "value": "."
                   }
                 ]
               },
