@@ -810,6 +810,9 @@ module.exports = grammar({
         $.quote_expression,
         $._string,
         alias('?', $.identifier), // x.? (getproperty with ?)
+        // Contextual keywords can be field names: `p.in`, `p.isa`.
+        alias('in', $.identifier),
+        alias('isa', $.identifier),
       ),
     )),
 
