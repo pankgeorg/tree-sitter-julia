@@ -1091,6 +1091,7 @@ module.exports = grammar({
         $.adjoint_expression,
         $.parenthesized_expression, // (2//3)x, (2)x
         $._array,                   // [1,2]u"cm", [1.0]x
+        $.call_expression,          // f(2)2, f(x)y
       ),
       // Require no whitespace between operands. Without this, `2 x` and
       // `-1 _neg2` get parsed as juxtaposition when they should be parse

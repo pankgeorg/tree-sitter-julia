@@ -4540,6 +4540,10 @@
               {
                 "type": "SYMBOL",
                 "name": "_array"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "call_expression"
               }
             ]
           },
