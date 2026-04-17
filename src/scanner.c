@@ -38,15 +38,33 @@ enum TokenType {
     TERNARY_COLON,
 };
 
+// Scanner state: remembers whether the last scanner call observed
+// whitespace before a `:`. Used to detect preceding-whitespace on the
+// next call (tree-sitter may consume extras between calls).
+typedef struct {
+    bool saw_ws_before_colon;
+} Scanner;
+
 void *tree_sitter_julia_external_scanner_create() {
-    return NULL;
+    Scanner *s = (Scanner *)malloc(sizeof(Scanner));
+    s->saw_ws_before_colon = false;
+    return s;
 }
 
-void tree_sitter_julia_external_scanner_destroy(void *payload) {}
+void tree_sitter_julia_external_scanner_destroy(void *payload) {
+    free(payload);
+}
 
-unsigned tree_sitter_julia_external_scanner_serialize(void *payload, char *buffer) { return 0; }
+unsigned tree_sitter_julia_external_scanner_serialize(void *payload, char *buffer) {
+    Scanner *s = (Scanner *)payload;
+    buffer[0] = s->saw_ws_before_colon ? 1 : 0;
+    return 1;
+}
 
-void tree_sitter_julia_external_scanner_deserialize(void *payload, const char *buffer, unsigned size) {}
+void tree_sitter_julia_external_scanner_deserialize(void *payload, const char *buffer, unsigned size) {
+    Scanner *s = (Scanner *)payload;
+    s->saw_ws_before_colon = (size >= 1) ? (buffer[0] != 0) : false;
+}
 
 // Scanner functions
 
@@ -411,6 +429,7 @@ static bool scan_ident_tail(TSLexer *lexer) {
 }
 
 bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
+    Scanner *scanner_state = (Scanner *)payload;
     if (valid_symbols[IMMEDIATE_PAREN] && lexer->lookahead == '(') {
         lexer->result_symbol = IMMEDIATE_PAREN;
         return true;
@@ -480,32 +499,49 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
     //      whitespace, emit TERNARY_COLON if valid (ternary context wins),
     //      else SPACED_RANGE_COLON.
     if (valid_symbols[TERNARY_COLON] || valid_symbols[SPACED_RANGE_COLON]) {
-        bool has_space_before = (lexer->lookahead == ' ' || lexer->lookahead == '\t');
-        if (has_space_before) {
-            while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
-                lexer->advance(lexer, true);
-            }
-            if (lexer->lookahead == ':') {
-                lexer->advance(lexer, false);
-                lexer->mark_end(lexer);
-                int32_t next = lexer->lookahead;
-                if (next != ':' && next != '=') {
-                    bool has_space_after = (next == ' ' || next == '\t' ||
-                                            next == '\n' || next == '\r');
-                    if (has_space_after) {
-                        // Ternary wins if active — keeps `a ? b : c` as ternary.
-                        if (valid_symbols[TERNARY_COLON]) {
-                            lexer->result_symbol = TERNARY_COLON;
-                            return true;
-                        }
-                        if (valid_symbols[SPACED_RANGE_COLON]) {
-                            lexer->result_symbol = SPACED_RANGE_COLON;
-                            return true;
-                        }
+        // Detect whitespace before `:`. The scanner may be called either
+        // with lookahead = space (extras not yet consumed) or lookahead = `:`
+        // (extras already skipped). We persist the "saw whitespace" flag
+        // in scanner state across calls at the same logical position.
+        bool saw_ws_here = (lexer->lookahead == ' ' || lexer->lookahead == '\t');
+        while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+            lexer->advance(lexer, true);
+        }
+        bool has_space_before = saw_ws_here || scanner_state->saw_ws_before_colon;
+
+        if (lexer->lookahead == ':') {
+            lexer->advance(lexer, false);
+            lexer->mark_end(lexer);
+            int32_t next = lexer->lookahead;
+            // Clear the flag now that we've consumed the `:`.
+            scanner_state->saw_ws_before_colon = false;
+
+            if (next != ':' && next != '=') {
+                bool has_space_after = (next == ' ' || next == '\t' ||
+                                        next == '\n' || next == '\r');
+                // Require space on BOTH sides — this is what distinguishes:
+                //   `a : b` (spaced range, emit)
+                //   `using $P: $(name)` (selected_import, skip)
+                //   `[1 :a]` (quote, skip)
+                //   `a:b` (flush range, skip; token.immediate(':') handles)
+                if (has_space_before && has_space_after) {
+                    // Ternary wins — keeps `a ? b : c` as ternary.
+                    if (valid_symbols[TERNARY_COLON]) {
+                        lexer->result_symbol = TERNARY_COLON;
+                        return true;
+                    }
+                    if (valid_symbols[SPACED_RANGE_COLON]) {
+                        lexer->result_symbol = SPACED_RANGE_COLON;
+                        return true;
                     }
                 }
-                return false;
             }
+            return false;
+        } else {
+            // Remember if we saw whitespace — on the next call with `:`
+            // as lookahead (extras consumed), use this to know there was
+            // preceding space.
+            if (saw_ws_here) scanner_state->saw_ws_before_colon = true;
         }
     }
 

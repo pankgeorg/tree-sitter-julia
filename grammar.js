@@ -977,10 +977,10 @@ module.exports = grammar({
         $._expression,
       )),
       // Spaced colon: `a : b`, `1 : 3`. External scanner emits
-      // `_spaced_range_colon` only when `:` has whitespace on both sides
-      // AND no other `:`-taking rule (selected_import, typed_expression)
-      // is in scope. Very low precedence so `a ? b : c` parses as ternary.
-      prec.left(1, seq(
+      // `_spaced_range_colon` only when `:` has whitespace on both sides.
+      // Precedence PREC.pair (11) < PREC.conditional (12) so ternary wins
+      // in `a ? b : c` but range wins over for_binding's PREC=1.
+      prec.left(PREC.pair, seq(
         $._expression,
         alias($._spaced_range_colon, $.operator),
         $._expression,

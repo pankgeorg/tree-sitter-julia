@@ -3991,7 +3991,7 @@
         },
         {
           "type": "PREC_LEFT",
-          "value": 1,
+          "value": 11,
           "content": {
             "type": "SEQ",
             "members": [
