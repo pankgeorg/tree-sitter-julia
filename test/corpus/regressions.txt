@@ -497,3 +497,404 @@ _rs_setindex!_err()
   (call_expression
     (identifier)
     (argument_list)))
+==============================
+primitive type size is an expression (bd5cc1e)
+==============================
+
+primitive type X sizeof(Ptr) * 8 end
+
+---
+(source_file
+  (primitive_definition
+    (type_head
+      (identifier))
+    (binary_expression
+      (call_expression
+        (identifier)
+        (argument_list
+          (identifier)))
+      (operator)
+      (integer_literal))))
+
+==============================
+spaced range colon `a : b` (ed4c7ff)
+==============================
+
+1 : 3
+a : b
+
+---
+(source_file
+  (range_expression
+    (integer_literal)
+    (operator)
+    (integer_literal))
+  (range_expression
+    (identifier)
+    (operator)
+    (identifier)))
+
+==============================
+ternary beats spaced range colon
+==============================
+
+a ? b : c
+x ? y : z
+
+---
+(source_file
+  (ternary_expression
+    (identifier)
+    (identifier)
+    (identifier))
+  (ternary_expression
+    (identifier)
+    (identifier)
+    (identifier)))
+
+==============================
+generator inside curly braces (1d9fa46)
+==============================
+
+x where {y for y in ys}
+
+---
+(source_file
+  (where_expression
+    (identifier)
+    (curly_expression
+      (generator
+        (identifier)
+        (for_clause
+          (for_binding
+            (identifier)
+            (operator)
+            (identifier)))))))
+
+==============================
+generator with trailing semicolon in curly (7a28618)
+==============================
+
+T{y for x = xs; a}
+
+---
+(source_file
+  (parametrized_type_expression
+    (identifier)
+    (curly_expression
+      (generator
+        (identifier)
+        (for_clause
+          (for_binding
+            (identifier)
+            (operator)
+            (identifier))))
+      (identifier))))
+
+==============================
+inline do-block with params and body (f5aed24)
+==============================
+
+f(x) do y body end
+
+---
+(source_file
+  (call_expression
+    (identifier)
+    (argument_list
+      (identifier))
+    (do_clause
+      (identifier)
+      (block
+        (identifier)))))
+
+==============================
+do-block with params only, no body (d17dc33)
+==============================
+
+f(x) do y end
+f(x) do a, b end
+
+---
+(source_file
+  (call_expression
+    (identifier)
+    (argument_list
+      (identifier))
+    (do_clause
+      (identifier)))
+  (call_expression
+    (identifier)
+    (argument_list
+      (identifier))
+    (do_clause
+      (identifier)
+      (identifier))))
+
+==============================
+inline let with multi-binding (439ea3f)
+==============================
+
+let x=1,y=2 end
+
+---
+(source_file
+  (let_statement
+    (assignment
+      (identifier)
+      (operator)
+      (integer_literal))
+    (assignment
+      (identifier)
+      (operator)
+      (integer_literal))))
+
+==============================
+catch clause with interpolation variable (439ea3f)
+==============================
+
+try x catch $e y end
+
+---
+(source_file
+  (try_statement
+    (block
+      (identifier))
+    (catch_clause
+      (interpolation_expression
+        (identifier))
+      (block
+        (identifier)))))
+
+==============================
+function signature — interpolation (439ea3f)
+==============================
+
+function $f end
+
+---
+(source_file
+  (function_definition
+    (signature
+      (interpolation_expression
+        (identifier)))))
+
+==============================
+function signature — closed macrocall (439ea3f)
+==============================
+
+function @callmemacro(a::Int)
+    1
+end
+
+---
+(source_file
+  (function_definition
+    (signature
+      (macrocall_expression
+        (macro_identifier
+          (identifier))
+        (argument_list
+          (typed_expression
+            (identifier)
+            (identifier)))))
+    (block
+      (integer_literal))))
+
+==============================
+function signature — operator name (d9f0a62)
+==============================
+
+function ⊇ end
+
+---
+(source_file
+  (function_definition
+    (signature
+      (operator))))
+
+==============================
+typed expression with integer RHS (af24b15)
+==============================
+
+let x::1 ; end
+
+---
+(source_file
+  (let_statement
+    (typed_expression
+      (identifier)
+      (integer_literal))))
+
+==============================
+typed expression with if-expr RHS (af24b15)
+==============================
+
+(y::if x z end)
+
+---
+(source_file
+  (parenthesized_expression
+    (typed_expression
+      (identifier)
+      (if_statement
+        condition: (identifier)
+        (block
+          (identifier))))))
+
+==============================
+parenthesized macro identifier (af24b15)
+==============================
+
+@(A) x
+
+---
+(source_file
+  (macrocall_expression
+    (macro_identifier
+      (identifier))
+    (macro_argument_list
+      (identifier))))
+
+==============================
+contextual keywords as field names (f565020)
+==============================
+
+p.in
+p.isa
+
+---
+(source_file
+  (field_expression
+    value: (identifier)
+    (identifier))
+  (field_expression
+    value: (identifier)
+    (identifier)))
+
+==============================
+contextual keywords as string macro prefix (4481160)
+==============================
+
+in"str"
+
+---
+(source_file
+  (prefixed_string_literal
+    prefix: (identifier)
+    (content)))
+
+==============================
+integer/float as assignment LHS chained (cf9e9f3)
+==============================
+
+f(x) = 1 = 2
+
+---
+(source_file
+  (assignment
+    (call_expression
+      (identifier)
+      (argument_list
+        (identifier)))
+    (operator)
+    (assignment
+      (integer_literal)
+      (operator)
+      (integer_literal))))
+
+==============================
+unary expression as juxtaposition RHS (a3d58f3)
+==============================
+
+1√x
+
+---
+(source_file
+  (juxtaposition_expression
+    (integer_literal)
+    (unary_expression
+      (operator)
+      (identifier))))
+
+==============================
+adjoint with Unicode superscript via juxtaposition (a3d58f3)
+==============================
+
+f'ᵀ
+
+---
+(source_file
+  (juxtaposition_expression
+    (adjoint_expression
+      (identifier))
+    (identifier)))
+
+==============================
+import path with operator — scope_dot (ea7f4d4)
+==============================
+
+import A.⋆
+import A.⋆.f
+import .⋆
+
+---
+(source_file
+  (import_statement
+    (import_path
+      (identifier)
+      (operator)))
+  (import_statement
+    (import_path
+      (identifier)
+      (operator)
+      (identifier)))
+  (import_statement
+    (import_path
+      (operator))))
+
+==============================
+juxtaposition rejects reserved keyword prefix (40197da)
+==============================
+
+1where 'c'
+1in foo
+1isa Int
+
+---
+(source_file
+  (where_expression
+    (integer_literal)
+    (character_literal))
+  (binary_expression
+    (integer_literal)
+    (operator)
+    (identifier))
+  (binary_expression
+    (integer_literal)
+    (operator)
+    (identifier)))
+
+==============================
+call expression as juxtaposition LHS (90843a2)
+==============================
+
+f(x)y
+(2)(3)x
+
+---
+(source_file
+  (juxtaposition_expression
+    (call_expression
+      (identifier)
+      (argument_list
+        (identifier)))
+    (identifier))
+  (juxtaposition_expression
+    (call_expression
+      (parenthesized_expression
+        (integer_literal))
+      (argument_list
+        (integer_literal)))
+    (identifier)))
+
