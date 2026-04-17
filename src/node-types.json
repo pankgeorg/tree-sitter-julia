@@ -1877,6 +1877,10 @@
         {
           "type": "operator",
           "named": true
+        },
+        {
+          "type": "var_identifier",
+          "named": true
         }
       ]
     }
@@ -2947,7 +2951,7 @@
     "fields": {},
     "children": {
       "multiple": true,
-      "required": true,
+      "required": false,
       "types": [
         {
           "type": "content",
@@ -2955,10 +2959,6 @@
         },
         {
           "type": "escape_sequence",
-          "named": true
-        },
-        {
-          "type": "identifier",
           "named": true
         }
       ]
@@ -3266,6 +3266,10 @@
   },
   {
     "type": "using",
+    "named": false
+  },
+  {
+    "type": "var",
     "named": false
   },
   {
