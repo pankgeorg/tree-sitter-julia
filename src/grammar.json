@@ -3125,8 +3125,13 @@
                 ]
               },
               {
-                "type": "SYMBOL",
-                "name": "_block_form"
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_block_form"
+                },
+                "named": true,
+                "value": "block"
               },
               {
                 "type": "STRING",

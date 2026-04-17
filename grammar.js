@@ -858,10 +858,11 @@ module.exports = grammar({
         'end',
       )),
       // Single-line with one body form (no terminator): `do y body end`.
+      // Wrap body in block so formatter rules see a consistent structure.
       prec.dynamic(1, seq(
         'do',
         sep1(',', $._bracket_form),
-        $._block_form,
+        alias($._block_form, $.block),
         'end',
       )),
       // No parameters: `f() do; body; end` or `do body end`.
