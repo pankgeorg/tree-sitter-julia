@@ -735,6 +735,10 @@
         {
           "type": "identifier",
           "named": true
+        },
+        {
+          "type": "interpolation_expression",
+          "named": true
         }
       ]
     }
@@ -2469,6 +2473,14 @@
         },
         {
           "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "interpolation_expression",
+          "named": true
+        },
+        {
+          "type": "macrocall_expression",
           "named": true
         },
         {

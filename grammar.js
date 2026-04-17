@@ -398,10 +398,13 @@ module.exports = grammar({
     signature: $ => prec(PREC.stmt, choice(
       $.identifier, // zero-method definition
       $.var_identifier, // var"..." zero-method definition
+      $.interpolation_expression, // function $f end (interpolated name)
       $.call_expression,
       alias($.tuple_expression, $.argument_list), // anonymous function
       $.typed_expression,
       $.where_expression,
+      // function @name(a) ... end — macrocall with closed parens
+      alias($._closed_macrocall_expression, $.macrocall_expression),
     )),
 
     function_definition: $ => seq(
@@ -449,12 +452,28 @@ module.exports = grammar({
 
     quote_statement: $ => seq('quote', optional($._terminator), optional($.block), 'end'),
 
-    let_statement: $ => seq(
-      'let',
-      sep(',', $._bracket_form),
-      $._terminator,
-      optional($.block),
-      'end',
+    let_statement: $ => choice(
+      // Bindings + terminator + block: `let x=1, y=2\n body\n end`.
+      prec.dynamic(2, seq(
+        'let',
+        sep1(',', $._bracket_form),
+        $._terminator,
+        optional($.block),
+        'end',
+      )),
+      // Inline: `let x=1, y=2 end` — no terminator, no body.
+      prec.dynamic(1, seq(
+        'let',
+        sep1(',', $._bracket_form),
+        'end',
+      )),
+      // No bindings: `let; body; end` or `let end`.
+      seq(
+        'let',
+        optional($._terminator),
+        optional($.block),
+        'end',
+      ),
     ),
 
     if_statement: $ => seq(
@@ -501,7 +520,7 @@ module.exports = grammar({
 
     catch_clause: $ => prec(1, seq(
       'catch',
-      optional($.identifier),
+      optional(choice($.identifier, $.interpolation_expression)),
       optional($._terminator),
       optional($.block),
     )),
