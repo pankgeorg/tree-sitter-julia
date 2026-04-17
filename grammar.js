@@ -242,11 +242,12 @@ module.exports = grammar({
     $._emoji_identifier,
     $._begin_identifier,
     $._ident_tail,
+    $._no_ws_here,
   ],
 
   conflicts: $ => [
-    [$.juxtaposition_expression, $._primary_expression], // adjoint
-    [$.juxtaposition_expression, $._expression],
+    // juxtaposition/_primary and juxtaposition/_expression conflicts were
+    // needed before _no_ws_here made juxtaposition unambiguous at the lexer.
     [$.matrix_row, $.comprehension_expression], // Comprehensions with newlines
     [$.parenthesized_expression, $.tuple_expression],
     [$._bracket_form, $.binary_expression], // ~ in brackets: binary wins over matrix element boundary
@@ -1011,6 +1012,10 @@ module.exports = grammar({
         $.parenthesized_expression, // (2//3)x, (2)x
         $._array,                   // [1,2]u"cm", [1.0]x
       ),
+      // Require no whitespace between operands. Without this, `2 x` and
+      // `-1 _neg2` get parsed as juxtaposition when they should be parse
+      // errors or separate tokens (e.g. macro args in @enum Negative _a=-1 _b=-2).
+      $._no_ws_here,
       $._primary_expression,
     )),
 

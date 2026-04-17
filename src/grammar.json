@@ -4146,6 +4146,10 @@
           },
           {
             "type": "SYMBOL",
+            "name": "_no_ws_here"
+          },
+          {
+            "type": "SYMBOL",
             "name": "_primary_expression"
           }
         ]
@@ -8675,14 +8679,6 @@
   ],
   "conflicts": [
     [
-      "juxtaposition_expression",
-      "_primary_expression"
-    ],
-    [
-      "juxtaposition_expression",
-      "_expression"
-    ],
-    [
       "matrix_row",
       "comprehension_expression"
     ],
@@ -8784,6 +8780,10 @@
     {
       "type": "SYMBOL",
       "name": "_ident_tail"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_no_ws_here"
     }
   ],
   "inline": [

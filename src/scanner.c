@@ -32,6 +32,7 @@ enum TokenType {
     EMOJI_IDENTIFIER,
     BEGIN_IDENTIFIER,
     IDENT_TAIL,
+    NO_WS_HERE,
 };
 
 void *tree_sitter_julia_external_scanner_create() {
@@ -427,6 +428,34 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
     if (valid_symbols[IDENT_TAIL] && scan_ident_tail(lexer)) {
         lexer->result_symbol = IDENT_TAIL;
         return true;
+    }
+
+    // Zero-width gate: juxtaposition requires NO whitespace between operands
+    // AND the RHS must be a valid juxtaposition start. Mirrors JuliaSyntax's
+    // `!preceding_whitespace(t) && !is_closing_token(ps, k)` check in
+    // parse_juxtapose (parser.jl line 1142-1150).
+    //
+    // Valid RHS starts: identifier/letter, paren, bracket, brace, string,
+    // command, macro-@. Invalid: whitespace, closing `]`/`)`/`}`, `,`, `;`,
+    // operators, `=`. The gate must reject invalid starts so tree-sitter
+    // doesn't insert MISSING nodes to force a juxtaposition.
+    if (valid_symbols[NO_WS_HERE]) {
+        uint32_t c = lexer->lookahead;
+        bool valid_rhs_start =
+            (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+            c == '_' || c == '(' || c == '[' || c == '{' ||
+            c == '"' || c == '`' || c == '@' || c == '$' ||
+            // Unicode identifier starts we care about (letters, math symbols)
+            (c >= 0x00C0 && c <= 0x024F) ||  // Latin Extended
+            (c >= 0x0370 && c <= 0x03FF) ||  // Greek
+            (c >= 0x0400 && c <= 0x04FF) ||  // Cyrillic
+            (c >= 0x2100 && c <= 0x214F) ||  // Letterlike symbols
+            (c >= 0x2200 && c <= 0x22FF) ||  // Math operators (unary √ etc.)
+            (c >= 0x2600 && c <= 0x27BF);    // BMP So
+        if (valid_rhs_start) {
+            lexer->result_symbol = NO_WS_HERE;
+            return true;
+        }
     }
 
     if (valid_symbols[BEGIN_IDENTIFIER] && scan_begin_identifier(lexer)) {
