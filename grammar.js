@@ -982,7 +982,7 @@ module.exports = grammar({
       // is in scope. Very low precedence so `a ? b : c` parses as ternary.
       prec.left(1, seq(
         $._expression,
-        $._spaced_range_colon,
+        alias($._spaced_range_colon, $.operator),
         $._expression,
       )),
     ),

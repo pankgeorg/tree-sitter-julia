@@ -4000,8 +4000,13 @@
                 "name": "_expression"
               },
               {
-                "type": "SYMBOL",
-                "name": "_spaced_range_colon"
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_spaced_range_colon"
+                },
+                "named": true,
+                "value": "operator"
               },
               {
                 "type": "SYMBOL",
