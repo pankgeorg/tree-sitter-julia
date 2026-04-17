@@ -749,6 +749,12 @@ module.exports = grammar({
         optional(','),
         '}',
       ),
+      // Generator inside curly braces: `{y for y in ys}` — used in where clauses.
+      seq(
+        '{',
+        $.generator,
+        '}',
+      ),
       // bracescat: space/semicolon-separated {x y}, {a ;; b}
       prec(PREC.array, seq(
         '{',

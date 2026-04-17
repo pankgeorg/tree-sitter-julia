@@ -864,6 +864,10 @@
           "named": true
         },
         {
+          "type": "generator",
+          "named": true
+        },
+        {
           "type": "matrix_row",
           "named": true
         }
