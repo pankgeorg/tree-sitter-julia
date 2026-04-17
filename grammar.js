@@ -1039,7 +1039,6 @@ module.exports = grammar({
       $.operator,
       alias($._syntactic_operator, $.operator),
       alias($._scoped_identifier, $.field_expression),
-      $.var_identifier, // @var"..."
     )),
 
     _scoped_identifier: $ => seq(
@@ -1211,7 +1210,7 @@ module.exports = grammar({
 
     // var"..." non-standard identifier (only 'var' prefix, not any identifier)
     var_identifier: $ => seq(
-      'var',
+      alias('var', $.identifier),
       $._immediate_string_start,
       choice(
         seq(

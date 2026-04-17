@@ -4237,10 +4237,6 @@
               },
               "named": true,
               "value": "field_expression"
-            },
-            {
-              "type": "SYMBOL",
-              "name": "var_identifier"
             }
           ]
         }
@@ -5101,8 +5097,13 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "STRING",
-          "value": "var"
+          "type": "ALIAS",
+          "content": {
+            "type": "STRING",
+            "value": "var"
+          },
+          "named": true,
+          "value": "identifier"
         },
         {
           "type": "SYMBOL",
