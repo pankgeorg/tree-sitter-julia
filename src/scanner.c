@@ -478,6 +478,43 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
             (c >= 0x2200 && c <= 0x22FF) ||  // Math operators (unary √ etc.)
             (c >= 0x2600 && c <= 0x27BF);    // BMP So
         if (valid_rhs_start) {
+            // Mark zero-width before any advancing: NO_WS_HERE is a gate token.
+            lexer->mark_end(lexer);
+            // If lookahead spells a Julia keyword followed by a non-identifier
+            // character, reject juxtaposition. e.g., `1where 'c'` should parse
+            // as where_expression, not juxt(1, where). Walks ahead at most 8
+            // ASCII letters; advances aren't visible because mark_end was
+            // called above.
+            if (c >= 'a' && c <= 'z') {
+                char buf[9] = {0};
+                int n = 0;
+                while (n < 8) {
+                    int32_t k = lexer->lookahead;
+                    if (k >= 'a' && k <= 'z') {
+                        buf[n++] = (char)k;
+                        lexer->advance(lexer, false);
+                    } else {
+                        break;
+                    }
+                }
+                int32_t after = lexer->lookahead;
+                bool is_ident_cont = (after >= 'a' && after <= 'z') ||
+                                     (after >= 'A' && after <= 'Z') ||
+                                     (after >= '0' && after <= '9') ||
+                                     after == '_' || after == '!';
+                if (!is_ident_cont) {
+                    if ((n == 5 && memcmp(buf, "where", 5) == 0) ||
+                        (n == 2 && memcmp(buf, "in",    2) == 0) ||
+                        (n == 3 && memcmp(buf, "isa",   3) == 0) ||
+                        (n == 3 && memcmp(buf, "end",   3) == 0) ||
+                        (n == 4 && memcmp(buf, "else",  4) == 0) ||
+                        (n == 6 && memcmp(buf, "elseif",6) == 0) ||
+                        (n == 5 && memcmp(buf, "catch", 5) == 0) ||
+                        (n == 7 && memcmp(buf, "finally",7) == 0)) {
+                        return false;
+                    }
+                }
+            }
             lexer->result_symbol = NO_WS_HERE;
             return true;
         }
