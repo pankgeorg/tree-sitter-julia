@@ -254,6 +254,7 @@ module.exports = grammar({
     [$.parenthesized_expression, $.tuple_expression],
     [$._bracket_form, $.binary_expression], // ~ in brackets: binary wins over matrix element boundary
     [$.open_tuple, $.binary_expression], // return a, b ~ c: ~ binds b and c
+    [$.block, $._bracket_form], // `do y body end`: distinguish params from block
   ],
 
   supertypes: $ => [
@@ -846,12 +847,30 @@ module.exports = grammar({
 
     macro_argument_list: $ => prec.left(repeat1(prec(PREC.macro_arg, $._block_form))),
 
-    do_clause: $ => seq(
-      'do',
-      sep(',', $._bracket_form),
-      $._terminator,
-      optional($.block),
-      'end',
+    do_clause: $ => choice(
+      // With parameters + required terminator before block:
+      //   `do x, y\n body\n end`, `do x; body end`.
+      prec.dynamic(2, seq(
+        'do',
+        sep1(',', $._bracket_form),
+        $._terminator,
+        optional($.block),
+        'end',
+      )),
+      // Single-line with one body form (no terminator): `do y body end`.
+      prec.dynamic(1, seq(
+        'do',
+        sep1(',', $._bracket_form),
+        $._block_form,
+        'end',
+      )),
+      // No parameters: `f() do; body; end` or `do body end`.
+      seq(
+        'do',
+        optional($._terminator),
+        optional($.block),
+        'end',
+      ),
     ),
 
     interpolation_expression: $ => prec.right(PREC.prefix, seq(
