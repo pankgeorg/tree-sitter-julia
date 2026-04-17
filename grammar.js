@@ -1248,7 +1248,13 @@ module.exports = grammar({
     ),
 
     prefixed_string_literal: $ => prec.left(seq(
-      field('prefix', $.identifier),
+      // Allow contextual keywords (in, isa) as string macro prefixes:
+      // `in"str"`, `isa"str"`.
+      field('prefix', choice(
+        $.identifier,
+        alias('in', $.identifier),
+        alias('isa', $.identifier),
+      )),
       $._immediate_string_start,
       choice(
         seq(
