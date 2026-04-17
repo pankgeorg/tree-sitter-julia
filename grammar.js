@@ -771,9 +771,11 @@ module.exports = grammar({
         '}',
       ),
       // Generator inside curly braces: `{y for y in ys}` — used in where clauses.
+      // Optionally followed by `; args` for trailing non-generator elements.
       seq(
         '{',
         $.generator,
+        optional(seq($._semicolon, sep(',', $._bracket_form), optional(','))),
         '}',
       ),
       // bracescat: space/semicolon-separated {x y}, {a ;; b}
