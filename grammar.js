@@ -245,6 +245,7 @@ module.exports = grammar({
     $._no_ws_here,
     $._spaced_range_colon,
     $._ternary_colon,
+    $._scope_dot,
   ],
 
   conflicts: $ => [
@@ -582,6 +583,7 @@ module.exports = grammar({
         $.identifier,
         $._scoped_identifier,
         $.macro_identifier, // import ..@symcheck
+        $.operator,        // import .⋆
       ),
     ),
 
@@ -1128,7 +1130,10 @@ module.exports = grammar({
       choice($.identifier, $.interpolation_expression),
       repeat1(
         seq(
-          token.immediate('.'),
+          // External scanner splits `.⋆` tokenization so the `.` here wins
+          // over broadcast operator lexing. Falls back to token.immediate('.')
+          // for the common case. See scanner.c scan_scope_dot.
+          choice(token.immediate('.'), $._scope_dot),
           choice(
             $.identifier,
             $.interpolation_expression,

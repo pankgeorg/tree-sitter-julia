@@ -36,6 +36,7 @@ enum TokenType {
     NO_WS_HERE,
     SPACED_RANGE_COLON,
     TERNARY_COLON,
+    SCOPE_DOT,
 };
 
 // Scanner state: remembers whether the last scanner call observed
@@ -545,6 +546,20 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
             // preceding space.
             if (saw_ws_here) scanner_state->saw_ws_before_colon = true;
         }
+    }
+
+    // Scope dot: emit `.` for scoped_identifier when the next character after
+    // `.` is an identifier/interpolation/operator/quote start. Prevents the
+    // lexer from greedily combining `.⋆`, `.+`, etc. into broadcast operators
+    // when we're parsing `A.⋆` or `A.+` as import path / field expression.
+    if (valid_symbols[SCOPE_DOT] && lexer->lookahead == '.') {
+        lexer->advance(lexer, false);
+        lexer->mark_end(lexer);
+        int32_t next = lexer->lookahead;
+        // Don't emit for `..` (ellipsis), `.=`, or nothing after dot.
+        if (next == '.' || next == '=' || next == 0) return false;
+        lexer->result_symbol = SCOPE_DOT;
+        return true;
     }
 
     if (valid_symbols[BINARY_TILDE] && scan_binary_tilde(lexer)) {
