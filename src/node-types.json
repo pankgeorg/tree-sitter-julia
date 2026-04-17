@@ -2785,6 +2785,10 @@
         {
           "type": "_expression",
           "named": true
+        },
+        {
+          "type": "if_statement",
+          "named": true
         }
       ]
     }

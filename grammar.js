@@ -1045,7 +1045,12 @@ module.exports = grammar({
     typed_expression: $ => prec(PREC.decl, seq(
       $._expression,
       '::',
-      $._primary_expression,
+      choice(
+        $._primary_expression,
+        $.integer_literal,
+        $.float_literal,
+        $.if_statement, // y::if x z end — type expression via if-else
+      ),
     )),
 
     unary_typed_expression: $ => prec.right(PREC.prefix, seq(
@@ -1100,6 +1105,7 @@ module.exports = grammar({
       alias($._syntactic_operator, $.operator),
       alias($._scoped_identifier, $.field_expression),
       $.var_identifier, // @var"..."
+      parenthesize($.identifier), // @(A) x — parenthesized macro name
     )),
 
     _scoped_identifier: $ => seq(
