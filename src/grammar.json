@@ -503,7 +503,7 @@
         },
         {
           "type": "SYMBOL",
-          "name": "integer_literal"
+          "name": "_expression"
         },
         {
           "type": "CHOICE",
