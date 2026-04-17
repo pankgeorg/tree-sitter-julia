@@ -4526,8 +4526,17 @@
             "name": "_no_ws_here"
           },
           {
-            "type": "SYMBOL",
-            "name": "_primary_expression"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "_primary_expression"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "unary_expression"
+              }
+            ]
           }
         ]
       }

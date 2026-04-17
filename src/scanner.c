@@ -471,6 +471,8 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
             (c >= 0x00C0 && c <= 0x024F) ||  // Latin Extended
             (c >= 0x0370 && c <= 0x03FF) ||  // Greek
             (c >= 0x0400 && c <= 0x04FF) ||  // Cyrillic
+            (c >= 0x1D00 && c <= 0x1DBF) ||  // Phonetic Extensions (ᵀ etc.)
+            (c >= 0x2070 && c <= 0x209F) ||  // Super/subscripts
             (c >= 0x2100 && c <= 0x214F) ||  // Letterlike symbols
             (c >= 0x2200 && c <= 0x22FF) ||  // Math operators (unary √ etc.)
             (c >= 0x2600 && c <= 0x27BF);    // BMP So

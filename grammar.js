@@ -1091,7 +1091,10 @@ module.exports = grammar({
       // `-1 _neg2` get parsed as juxtaposition when they should be parse
       // errors or separate tokens (e.g. macro args in @enum Negative _a=-1 _b=-2).
       $._no_ws_here,
-      $._primary_expression,
+      choice(
+        $._primary_expression,
+        $.unary_expression, // 1√x, 2√3, -1abs(x)
+      ),
     )),
 
     compound_assignment_expression: $ => prec.right(PREC.assign, seq(
