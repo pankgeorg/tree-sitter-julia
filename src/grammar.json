@@ -3963,28 +3963,54 @@
       ]
     },
     "range_expression": {
-      "type": "PREC_LEFT",
-      "value": 20,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "SYMBOL",
-            "name": "_expression"
-          },
-          {
-            "type": "IMMEDIATE_TOKEN",
-            "content": {
-              "type": "STRING",
-              "value": ":"
-            }
-          },
-          {
-            "type": "SYMBOL",
-            "name": "_expression"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "PREC_LEFT",
+          "value": 20,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "_expression"
+              },
+              {
+                "type": "IMMEDIATE_TOKEN",
+                "content": {
+                  "type": "STRING",
+                  "value": ":"
+                }
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_expression"
+              }
+            ]
           }
-        ]
-      }
+        },
+        {
+          "type": "PREC_LEFT",
+          "value": 1,
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "_expression"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_spaced_range_colon"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "_expression"
+              }
+            ]
+          }
+        }
+      ]
     },
     "splat_expression": {
       "type": "PREC",
@@ -4022,7 +4048,12 @@
             "name": "_bracket_form"
           },
           {
-            "type": "STRING",
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_ternary_colon"
+            },
+            "named": false,
             "value": ":"
           },
           {
@@ -8784,6 +8815,14 @@
     {
       "type": "SYMBOL",
       "name": "_no_ws_here"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_spaced_range_colon"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_ternary_colon"
     }
   ],
   "inline": [

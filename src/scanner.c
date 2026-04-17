@@ -1,4 +1,5 @@
 #include "tree_sitter/parser.h"
+#include <string.h>
 
 /// Block comments and immediate parentheses are easy to parse, but strings
 /// require extra-attention.
@@ -33,6 +34,8 @@ enum TokenType {
     BEGIN_IDENTIFIER,
     IDENT_TAIL,
     NO_WS_HERE,
+    SPACED_RANGE_COLON,
+    TERNARY_COLON,
 };
 
 void *tree_sitter_julia_external_scanner_create() {
@@ -464,6 +467,46 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
 
     if (valid_symbols[EMOJI_IDENTIFIER] && scan_emoji_identifier(lexer)) {
         return true;
+    }
+
+    // Handle `:` before binary_tilde since binary_tilde consumes whitespace.
+    // Julia's range/ternary colon is space-sensitive:
+    //   `a : b`  → range (space both sides, outside ternary)
+    //   `a ? b : c` → ternary (`:` separates branches)
+    //   `[1 :a]` → quote (space before `:` but not after)
+    // Strategy:
+    //   1) Skip leading space (if any).
+    //   2) If lookahead is `:` and not followed by `:`/`=`, and followed by
+    //      whitespace, emit TERNARY_COLON if valid (ternary context wins),
+    //      else SPACED_RANGE_COLON.
+    if (valid_symbols[TERNARY_COLON] || valid_symbols[SPACED_RANGE_COLON]) {
+        bool has_space_before = (lexer->lookahead == ' ' || lexer->lookahead == '\t');
+        if (has_space_before) {
+            while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
+                lexer->advance(lexer, true);
+            }
+            if (lexer->lookahead == ':') {
+                lexer->advance(lexer, false);
+                lexer->mark_end(lexer);
+                int32_t next = lexer->lookahead;
+                if (next != ':' && next != '=') {
+                    bool has_space_after = (next == ' ' || next == '\t' ||
+                                            next == '\n' || next == '\r');
+                    if (has_space_after) {
+                        // Ternary wins if active — keeps `a ? b : c` as ternary.
+                        if (valid_symbols[TERNARY_COLON]) {
+                            lexer->result_symbol = TERNARY_COLON;
+                            return true;
+                        }
+                        if (valid_symbols[SPACED_RANGE_COLON]) {
+                            lexer->result_symbol = SPACED_RANGE_COLON;
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+        }
     }
 
     if (valid_symbols[BINARY_TILDE] && scan_binary_tilde(lexer)) {

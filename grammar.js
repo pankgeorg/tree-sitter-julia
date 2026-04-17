@@ -243,6 +243,8 @@ module.exports = grammar({
     $._begin_identifier,
     $._ident_tail,
     $._no_ws_here,
+    $._spaced_range_colon,
+    $._ternary_colon,
   ],
 
   conflicts: $ => [
@@ -966,11 +968,24 @@ module.exports = grammar({
       )),
     ),
 
-    range_expression: $ => prec.left(PREC.colon, seq(
-      $._expression,
-      token.immediate(':'),
-      $._expression,
-    )),
+    range_expression: $ => choice(
+      // Flush colon: `a:b`, `1:3`. High precedence (PREC.colon=20) so
+      // `1:3+4` = `1:(3+4)` and `a+1:3` = `(a+1):3`.
+      prec.left(PREC.colon, seq(
+        $._expression,
+        token.immediate(':'),
+        $._expression,
+      )),
+      // Spaced colon: `a : b`, `1 : 3`. External scanner emits
+      // `_spaced_range_colon` only when `:` has whitespace on both sides
+      // AND no other `:`-taking rule (selected_import, typed_expression)
+      // is in scope. Very low precedence so `a ? b : c` parses as ternary.
+      prec.left(1, seq(
+        $._expression,
+        $._spaced_range_colon,
+        $._expression,
+      )),
+    ),
 
     splat_expression: $ => prec(PREC.colon, seq($._expression, '...')),
 
@@ -978,7 +993,7 @@ module.exports = grammar({
       $._expression,
       '?',
       $._bracket_form,
-      ':',
+      alias($._ternary_colon, ':'),
       $._bracket_form,
     )),
 
