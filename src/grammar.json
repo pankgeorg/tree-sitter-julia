@@ -225,6 +225,14 @@
               {
                 "type": "SYMBOL",
                 "name": "operator"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "integer_literal"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "float_literal"
               }
             ]
           },

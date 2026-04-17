@@ -304,6 +304,8 @@ module.exports = grammar({
         $.open_tuple,
         $._operation,
         $.operator,
+        $.integer_literal,
+        $.float_literal,
       ),
       alias('=', $.operator),
       $._block_form,
