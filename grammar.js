@@ -1039,7 +1039,6 @@ module.exports = grammar({
       $.operator,
       alias($._syntactic_operator, $.operator),
       alias($._scoped_identifier, $.field_expression),
-      $.var_identifier, // @var"..."
     )),
 
     _scoped_identifier: $ => seq(
