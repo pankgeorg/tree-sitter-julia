@@ -456,6 +456,7 @@ function g(; x, y::Int, z = 1, kwargs...) nothing end
         (argument_list
           (identifier)
           (splat_expression (identifier))
+          (parameters_separator)
           (splat_expression (identifier))))))
 
   (function_definition
@@ -463,6 +464,7 @@ function g(; x, y::Int, z = 1, kwargs...) nothing end
       (call_expression
         (identifier)
         (argument_list
+          (parameters_separator)
           (identifier)
           (typed_expression
             (identifier)
@@ -698,6 +700,7 @@ Base.show(io::IO, ::MIME"text/plain", m::Method; kwargs...) = show_method(io, m,
             prefix: (identifier)
             (content)))
         (typed_expression (identifier) (identifier))
+        (parameters_separator)
         (splat_expression (identifier))))
     (operator)
     (call_expression

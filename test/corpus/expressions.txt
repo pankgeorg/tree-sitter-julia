@@ -182,6 +182,7 @@ new{typeof(xs)}(xs)
     (identifier)
     (argument_list
       (identifier)
+      (parameters_separator)
       (assignment
         (identifier)
         (operator)
@@ -190,6 +191,7 @@ new{typeof(xs)}(xs)
     (identifier)
     (argument_list
       (identifier)
+      (parameters_separator)
       (identifier)))
   (call_expression
     (parametrized_type_expression

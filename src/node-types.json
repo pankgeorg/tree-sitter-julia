@@ -398,6 +398,14 @@
         {
           "type": "generator",
           "named": true
+        },
+        {
+          "type": "parameters_separator",
+          "named": true
+        },
+        {
+          "type": "trailing_comma",
+          "named": true
         }
       ]
     }
@@ -878,6 +886,10 @@
         },
         {
           "type": "matrix_row",
+          "named": true
+        },
+        {
+          "type": "trailing_comma",
           "named": true
         }
       ]
@@ -2043,6 +2055,11 @@
     "fields": {}
   },
   {
+    "type": "parameters_separator",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "parametrized_type_expression",
     "named": true,
     "fields": {},
@@ -2689,6 +2706,14 @@
         {
           "type": "generator",
           "named": true
+        },
+        {
+          "type": "parameters_separator",
+          "named": true
+        },
+        {
+          "type": "trailing_comma",
+          "named": true
         }
       ]
     }
@@ -3025,6 +3050,14 @@
         {
           "type": "assignment",
           "named": true
+        },
+        {
+          "type": "parameters_separator",
+          "named": true
+        },
+        {
+          "type": "trailing_comma",
+          "named": true
         }
       ]
     }
@@ -3293,6 +3326,10 @@
   {
     "type": "struct",
     "named": false
+  },
+  {
+    "type": "trailing_comma",
+    "named": true
   },
   {
     "type": "true",

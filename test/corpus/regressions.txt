@@ -227,7 +227,7 @@ f(a;)
 (source_file
   (call_expression
     (identifier)
-    (argument_list (identifier))))
+    (argument_list (identifier) (parameters_separator))))
 
 ==============================
 nested interpolation (2d4dbdf)

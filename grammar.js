@@ -742,14 +742,14 @@ module.exports = grammar({
         '[',
         $._bracket_form,
         repeat1(seq(',', $._bracket_form)),
-        repeat1(seq($._semicolon, sep(',', $._bracket_form))),
+        repeat1(seq(alias($._semicolon, $.parameters_separator), sep(',', $._bracket_form))),
         ']',
       ),
       // Regular vector: comma-separated
       seq(
         '[',
         sep(',', $._bracket_form),
-        optional(','),
+        optional(alias(',', $.trailing_comma)),
         ']',
       ),
     ),
@@ -763,19 +763,22 @@ module.exports = grammar({
     )),
 
     tuple_expression: $ => parenthesize(
-      optional($._semicolon),
-      sep(choice(',', $._semicolon), choice(
+      optional(alias($._semicolon, $.parameters_separator)),
+      sep(choice(',', alias($._semicolon, $.parameters_separator)), choice(
         $._bracket_form,
         $.generator,
       )),
-      optional(choice(',', $._semicolon)),
+      optional(choice(
+        alias(',', $.trailing_comma),
+        alias($._semicolon, $.parameters_separator),
+      )),
     ),
 
     curly_expression: $ => choice(
       seq(
         '{',
         sep(',', $._bracket_form),
-        optional(','),
+        optional(alias(',', $.trailing_comma)),
         '}',
       ),
       // Generator inside curly braces: `{y for y in ys}` — used in where clauses.
