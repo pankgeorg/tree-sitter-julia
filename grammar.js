@@ -725,6 +725,11 @@ module.exports = grammar({
         $.tuple_expression,
         $.typed_expression,
         $.interpolation_expression,
+        // Contextual keywords usable as a loop variable name, e.g.
+        // `for isa in ISAs` (stdlib base/cpuid.jl). At low precedence so
+        // binary uses of `in`/`isa` outside for-binding still win.
+        prec(-1, alias('isa', $.identifier)),
+        prec(-1, alias('in',  $.identifier)),
       ),
       alias(choice('in', '=', '∈'), $.operator),
       $._expression,
