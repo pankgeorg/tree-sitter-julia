@@ -449,6 +449,11 @@
     }
   },
   {
+    "type": "baremodule_keyword",
+    "named": true,
+    "fields": {}
+  },
+  {
     "type": "binary_expression",
     "named": true,
     "fields": {},
@@ -1998,15 +2003,24 @@
       }
     },
     "children": {
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "types": [
+        {
+          "type": "baremodule_keyword",
+          "named": true
+        },
         {
           "type": "block",
           "named": true
         }
       ]
     }
+  },
+  {
+    "type": "mutable_keyword",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "open_tuple",
@@ -2597,6 +2611,10 @@
       "types": [
         {
           "type": "block",
+          "named": true
+        },
+        {
+          "type": "mutable_keyword",
           "named": true
         },
         {

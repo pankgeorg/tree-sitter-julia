@@ -482,6 +482,7 @@ end
           (identifier)))))
   (line_comment)
   (struct_definition
+    (mutable_keyword)
     (type_head
       (interpolation_expression
         (parenthesized_expression

@@ -351,12 +351,14 @@ module.exports = grammar({
     ),
 
     module_definition: $ => seq(
-      choice('module', 'baremodule'),
+      choice('module', $.baremodule_keyword),
       field('name', choice($.identifier, $.interpolation_expression)),
       optional($._terminator),
       optional($.block),
       'end',
     ),
+
+    baremodule_keyword: _ => 'baremodule',
 
     // TODO: Rename
     type_head: $ => prec(PREC.stmt, choice(
@@ -383,13 +385,15 @@ module.exports = grammar({
     ),
 
     struct_definition: $ => seq(
-      optional('mutable'),
+      optional($.mutable_keyword),
       'struct',
       $.type_head,
       optional($._terminator),
       optional($.block),
       'end',
     ),
+
+    mutable_keyword: _ => 'mutable',
 
     typegroup_definition: $ => seq(
       'typegroup',
