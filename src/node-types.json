@@ -3314,6 +3314,14 @@
     "named": false
   },
   {
+    "type": "in",
+    "named": false
+  },
+  {
+    "type": "isa",
+    "named": false
+  },
+  {
     "type": "let",
     "named": false
   },

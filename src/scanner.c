@@ -463,7 +463,13 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
     // doesn't insert MISSING nodes to force a juxtaposition.
     if (valid_symbols[NO_WS_HERE]) {
         uint32_t c = lexer->lookahead;
-        bool valid_rhs_start =
+        // Exclude specific Latin-1 chars that are Julia binary operators, not
+        // identifier starts: × (U+00D7) is _times_operator, ÷ (U+00F7) is
+        // _times_operator. Without this exclusion, `1÷2` and `f(x)÷g(y)`
+        // spuriously start juxtaposition and then can't find a valid RHS,
+        // producing ERROR instead of binary_expression.
+        bool is_binary_op_char = (c == 0x00D7) || (c == 0x00F7);
+        bool valid_rhs_start = !is_binary_op_char && (
             (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
             c == '_' || c == '(' || c == '[' || c == '{' ||
             c == '"' || c == '`' || c == '@' || c == '$' ||
@@ -475,7 +481,7 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
             (c >= 0x2070 && c <= 0x209F) ||  // Super/subscripts
             (c >= 0x2100 && c <= 0x214F) ||  // Letterlike symbols
             (c >= 0x2200 && c <= 0x22FF) ||  // Math operators (unary √ etc.)
-            (c >= 0x2600 && c <= 0x27BF);    // BMP So
+            (c >= 0x2600 && c <= 0x27BF));   // BMP So
         if (valid_rhs_start) {
             // Mark zero-width before any advancing: NO_WS_HERE is a gate token.
             lexer->mark_end(lexer);

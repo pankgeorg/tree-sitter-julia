@@ -658,15 +658,24 @@ module.exports = grammar({
       $.index_expression,
       $.interpolation_expression,
       $.quote_expression,
-      prec(-1, alias('public', $.identifier)), // Julia 1.11: contextual keyword
-      prec(-1, alias('primitive', $.identifier)), // contextual: only keyword in `primitive type`
-      prec(-1, alias('abstract', $.identifier)),  // contextual: only keyword in `abstract type`
-      prec(-1, alias('mutable', $.identifier)),   // contextual: only keyword in `mutable struct`
-      // `in` and `isa` are binary operators AND valid function names.
-      // Allow them as identifiers at low precedence so `!isa(x)` parses as
-      // `!(isa(x))` (unary + call) instead of `! isa (x)` (binary).
+      // Contextual keywords usable as identifiers — plain `public`, `in` …
+      prec(-1, alias('public', $.identifier)),
+      prec(-1, alias('primitive', $.identifier)),
+      prec(-1, alias('abstract', $.identifier)),
+      prec(-1, alias('mutable', $.identifier)),
       prec(-1, alias('in', $.identifier)),
       prec(-1, alias('isa', $.identifier)),
+      // Same keywords but carrying an `!` / word-tail suffix, e.g. `in!`,
+      // `isa!`, `mutable!` — so function names like `in!(x, s)` parse as a
+      // single identifier. JuliaSyntax permits any word identifier to carry
+      // an `!`-suffix; these rules mirror that without invoking the regular
+      // `_word_identifier` (which forbids these words as identifier starts).
+      prec(-1, alias($._public_identifier, $.identifier)),
+      prec(-1, alias($._primitive_identifier, $.identifier)),
+      prec(-1, alias($._abstract_identifier, $.identifier)),
+      prec(-1, alias($._mutable_identifier, $.identifier)),
+      prec(-1, alias($._in_identifier, $.identifier)),
+      prec(-1, alias($._isa_identifier, $.identifier)),
       alias($._begin_identifier, $.identifier),    // begin as identifier via external scanner (a[begin+1:end])
       alias($._emoji_identifier, $.identifier),    // SMP emoji identifiers via external scanner
     ),
@@ -1157,6 +1166,16 @@ module.exports = grammar({
     ),
 
     _word_identifier: _ => identifierStartRest(),
+
+    // Contextual-keyword identifiers WITH `!` / word tail (required).
+    // Used as `alias($._<kw>_identifier, $.identifier)`; the no-tail case is
+    // handled by the plain `alias('kw', $.identifier)` alternative.
+    _public_identifier: $ => seq('public', $._ident_tail),
+    _primitive_identifier: $ => seq('primitive', $._ident_tail),
+    _abstract_identifier: $ => seq('abstract', $._ident_tail),
+    _mutable_identifier: $ => seq('mutable', $._ident_tail),
+    _in_identifier: $ => seq('in', $._ident_tail),
+    _isa_identifier: $ => seq('isa', $._ident_tail),
 
     // Julia identifiers may contain '!' anywhere except at the start,
     // UNLESS the '!' is followed by '=' (which starts the `!=` operator).
