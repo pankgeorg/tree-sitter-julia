@@ -5246,8 +5246,13 @@
           "type": "SEQ",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "_delimiter_str_3"
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_delimiter_str_3"
+              },
+              "named": true,
+              "value": "triple_quote"
             },
             {
               "type": "REPEAT",
@@ -5327,8 +5332,13 @@
           "type": "SEQ",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "_delimiter_cmd_3"
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_delimiter_cmd_3"
+              },
+              "named": true,
+              "value": "triple_backtick"
             },
             {
               "type": "REPEAT",
@@ -5445,8 +5455,13 @@
                 "type": "SEQ",
                 "members": [
                   {
-                    "type": "SYMBOL",
-                    "name": "_delimiter_str_3"
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_delimiter_str_3"
+                    },
+                    "named": true,
+                    "value": "triple_quote"
                   },
                   {
                     "type": "REPEAT",
@@ -5555,8 +5570,13 @@
                 "type": "SEQ",
                 "members": [
                   {
-                    "type": "SYMBOL",
-                    "name": "_delimiter_cmd_3"
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_delimiter_cmd_3"
+                    },
+                    "named": true,
+                    "value": "triple_backtick"
                   },
                   {
                     "type": "REPEAT",

@@ -1249,7 +1249,7 @@ module.exports = grammar({
         $._end_str,
       ),
       seq(
-        $._delimiter_str_3,
+        alias($._delimiter_str_3, $.triple_quote),
         repeat(choice(alias($._content_str_3, $.content), $.string_interpolation, $.escape_sequence)),
         $._end_str,
       ),
@@ -1262,7 +1262,7 @@ module.exports = grammar({
         $._end_cmd,
       ),
       seq(
-        $._delimiter_cmd_3,
+        alias($._delimiter_cmd_3, $.triple_backtick),
         repeat(choice(alias($._content_cmd_3, $.content), $.string_interpolation, $.escape_sequence)),
         $._end_cmd,
       ),
@@ -1284,7 +1284,7 @@ module.exports = grammar({
           $._end_str,
         ),
         seq(
-          $._delimiter_str_3,
+          alias($._delimiter_str_3, $.triple_quote),
           repeat(choice(alias($._content_str_3_raw, $.content), $.escape_sequence)),
           $._end_str,
         ),
@@ -1302,7 +1302,7 @@ module.exports = grammar({
           $._end_cmd,
         ),
         seq(
-          $._delimiter_cmd_3,
+          alias($._delimiter_cmd_3, $.triple_backtick),
           repeat(choice(alias($._content_cmd_3_raw, $.content), $.escape_sequence)),
           $._end_cmd,
         ),

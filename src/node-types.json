@@ -775,6 +775,10 @@
         {
           "type": "string_interpolation",
           "named": true
+        },
+        {
+          "type": "triple_backtick",
+          "named": true
         }
       ]
     }
@@ -2225,6 +2229,10 @@
         {
           "type": "escape_sequence",
           "named": true
+        },
+        {
+          "type": "triple_backtick",
+          "named": true
         }
       ]
     }
@@ -2272,6 +2280,10 @@
         },
         {
           "type": "escape_sequence",
+          "named": true
+        },
+        {
+          "type": "triple_quote",
           "named": true
         }
       ]
@@ -2614,6 +2626,10 @@
         {
           "type": "string_interpolation",
           "named": true
+        },
+        {
+          "type": "triple_quote",
+          "named": true
         }
       ]
     }
@@ -2659,6 +2675,16 @@
         }
       ]
     }
+  },
+  {
+    "type": "triple_backtick",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "triple_quote",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "try_statement",
