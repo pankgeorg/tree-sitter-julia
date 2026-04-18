@@ -1153,7 +1153,10 @@ module.exports = grammar({
       $.operator,
       alias($._syntactic_operator, $.operator),
       alias($._scoped_identifier, $.field_expression),
-      $.var_identifier, // @var"..."
+      $.var_identifier, // @var"..." (string form wins over @var when a string follows)
+      // Bare `@var` macro name (no string suffix). At prec(-1) so the
+      // `@var"..."` string form still wins when applicable.
+      prec(-1, alias('var', $.identifier)),
       parenthesize($.identifier), // @(A) x — parenthesized macro name
     )),
 

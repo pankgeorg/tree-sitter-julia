@@ -4880,6 +4880,19 @@
               "name": "var_identifier"
             },
             {
+              "type": "PREC",
+              "value": -1,
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "STRING",
+                  "value": "var"
+                },
+                "named": true,
+                "value": "identifier"
+              }
+            },
+            {
               "type": "SEQ",
               "members": [
                 {
