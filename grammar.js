@@ -922,7 +922,11 @@ module.exports = grammar({
     // body. Stays below PREC.dot so @f a.b still parses correctly.
     macrocall_expression: $ => prec.right(PREC.decl, seq($._macro_head, optional($.macro_argument_list))),
 
-    macro_argument_list: $ => prec.left(repeat1(prec(PREC.macro_arg, $._block_form))),
+    // `prec.right` so an inner bare-arg macrocall (e.g. `@assert false "msg"`)
+    // greedily extends its arg list across additional `_block_form`s rather
+    // than reducing early and letting the *outer* macrocall pick the trailing
+    // args up. Required for `@noinline f() = @assert false "msg"`-style idioms.
+    macro_argument_list: $ => prec.right(repeat1(prec(PREC.macro_arg, $._block_form))),
 
     do_clause: $ => choice(
       // With parameters + required terminator before block:
