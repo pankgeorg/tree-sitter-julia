@@ -90,7 +90,12 @@ static bool scan_content(TSLexer *lexer, TSSymbol content_symbol, char end_char,
                 lexer->result_symbol = content_symbol;
                 return has_content;
             }
-        } else {
+        } else if (next == end_char) {
+            // Try to match an end delimiter of n_delim consecutive end_chars.
+            // If the match fails after consuming some (n_delim > 1 and the run
+            // is shorter), those chars are already advanced past; continue the
+            // outer loop from the new lookahead without re-advancing, or we'd
+            // skip a following `$` interpolation / `\` escape.
             bool is_end_delimiter = true;
             for (unsigned i = 1; i <= n_delim; i++) {
                 if (lexer->lookahead == end_char) {
@@ -110,6 +115,8 @@ static bool scan_content(TSLexer *lexer, TSSymbol content_symbol, char end_char,
                     return true;
                 }
             }
+            has_content = true;
+            continue;
         }
         advance(lexer);
         has_content = true;
