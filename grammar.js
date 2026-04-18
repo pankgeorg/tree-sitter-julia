@@ -500,7 +500,7 @@ module.exports = grammar({
 
     if_statement: $ => seq(
       'if',
-      field('condition', $._expression),
+      field('condition', $._greedy_expression),
       optional($._terminator),
       optional($.block),
       field('alternative', repeat($.elseif_clause)),
@@ -510,10 +510,16 @@ module.exports = grammar({
 
     elseif_clause: $ => seq(
       'elseif',
-      field('condition', $._expression),
+      field('condition', $._greedy_expression),
       optional($._terminator),
       optional($.block),
     ),
+
+    // Hidden wrapper with `prec.right(1, ...)` to force tree-sitter's LR to
+    // *extend* the expression across `+1 < endind && …` rather than reducing
+    // early at a bare identifier and letting the block start with a
+    // unary-plus expression. Used for `if`/`elseif`/`while` conditions.
+    _greedy_expression: $ => prec.right(1, $._expression),
 
     else_clause: $ => seq(
       'else',
@@ -563,7 +569,7 @@ module.exports = grammar({
 
     while_statement: $ => seq(
       'while',
-      field('condition', $._expression),
+      field('condition', $._greedy_expression),
       optional($._terminator),
       optional($.block),
       'end',

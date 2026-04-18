@@ -1088,7 +1088,7 @@
           "name": "condition",
           "content": {
             "type": "SYMBOL",
-            "name": "_expression"
+            "name": "_greedy_expression"
           }
         },
         {
@@ -1160,7 +1160,7 @@
           "name": "condition",
           "content": {
             "type": "SYMBOL",
-            "name": "_expression"
+            "name": "_greedy_expression"
           }
         },
         {
@@ -1188,6 +1188,14 @@
           ]
         }
       ]
+    },
+    "_greedy_expression": {
+      "type": "PREC_RIGHT",
+      "value": 1,
+      "content": {
+        "type": "SYMBOL",
+        "name": "_expression"
+      }
     },
     "else_clause": {
       "type": "SEQ",
@@ -1491,7 +1499,7 @@
           "name": "condition",
           "content": {
             "type": "SYMBOL",
-            "name": "_expression"
+            "name": "_greedy_expression"
           }
         },
         {
