@@ -780,6 +780,16 @@ module.exports = grammar({
         $._bracket_form,
         $.generator,
       )),
+      // Allow a trailing `,` BEFORE a `;` kwarg split, then more args —
+      // e.g. `f(a, b, ; kw=1)` (common in multi-line argument lists).
+      optional(seq(
+        alias(',', $.trailing_comma),
+        alias($._semicolon, $.parameters_separator),
+        optional(sep1(choice(',', alias($._semicolon, $.parameters_separator)), choice(
+          $._bracket_form,
+          $.generator,
+        ))),
+      )),
       optional(choice(
         alias(',', $.trailing_comma),
         alias($._semicolon, $.parameters_separator),
