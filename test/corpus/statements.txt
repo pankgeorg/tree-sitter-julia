@@ -364,8 +364,8 @@ import Base: @view as @v
 
   ;; Relative paths
   (using_statement
-    (import_path (identifier))
-    (import_path (identifier)))
+    (import_path (relative_dot) (relative_dot) (identifier))
+    (import_path (relative_dot) (relative_dot) (identifier)))
 
   ;; List import
   (import_statement (identifier) (identifier) (identifier))

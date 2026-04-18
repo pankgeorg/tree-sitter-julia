@@ -1608,8 +1608,16 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "SYMBOL",
-          "name": "_import_from_current_module"
+          "type": "REPEAT1",
+          "content": {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_import_from_current_module"
+            },
+            "named": true,
+            "value": "relative_dot"
+          }
         },
         {
           "type": "CHOICE",

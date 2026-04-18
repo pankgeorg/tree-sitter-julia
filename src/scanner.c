@@ -352,23 +352,15 @@ static bool scan_begin_identifier(TSLexer *lexer) {
     return false;
 }
 
+// Emits one `.` per call so `.A`, `..A`, `...A` produce 1, 2, or 3 tokens
+// respectively. The grammar's `import_path` rule wraps these with `repeat1`
+// and aliases each to `relative_dot` so the dot count is preserved in the
+// CST as a named-child count.
 static bool scan_import_from_current_module(TSLexer *lexer) {
     skip_whitespace(lexer);
     if (lexer->lookahead != '.') return false;
     advance(lexer);
     mark_end(lexer);
-    for (;;) {
-        // Skip spaces/tabs between dots (not newlines)
-        while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
-            advance(lexer);
-        }
-        if (lexer->lookahead == '.') {
-            advance(lexer);
-            mark_end(lexer);
-        } else {
-            break;
-        }
-    }
     lexer->result_symbol = IMPORT_FROM_CURRENT_MODULE;
     return true;
 }

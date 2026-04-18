@@ -851,6 +851,7 @@ import .⋆
       (identifier)))
   (import_statement
     (import_path
+      (relative_dot)
       (operator))))
 
 ==============================

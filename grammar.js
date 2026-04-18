@@ -582,7 +582,10 @@ module.exports = grammar({
     import_alias: $ => seq($._importable, 'as', $._exportable),
 
     import_path: $ => seq(
-      $._import_from_current_module, // dots with optional spaces: .A, ..A, . .A
+      // Each `.` is now a separate external-scanner token, aliased as
+      // `relative_dot` so the CST preserves the dot count (`.A`, `..A`,
+      // `...A` differ structurally).
+      repeat1(alias($._import_from_current_module, $.relative_dot)),
       choice(
         $.identifier,
         $._scoped_identifier,

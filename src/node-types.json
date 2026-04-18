@@ -1462,6 +1462,10 @@
           "named": true
         },
         {
+          "type": "relative_dot",
+          "named": true
+        },
+        {
           "type": "var_identifier",
           "named": true
         }
@@ -3344,6 +3348,10 @@
   {
     "type": "quote",
     "named": false
+  },
+  {
+    "type": "relative_dot",
+    "named": true
   },
   {
     "type": "return",
