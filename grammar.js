@@ -257,6 +257,9 @@ module.exports = grammar({
     [$._bracket_form, $.binary_expression], // ~ in brackets: binary wins over matrix element boundary
     [$.open_tuple, $.binary_expression], // return a, b ~ c: ~ binds b and c
     [$.block, $._bracket_form], // `do y body end`: distinguish params from block
+    // `return "s" , x` — doc-string-binding vs open_tuple with string LHS.
+    // GLR keeps both live; the `_terminator?` look-ahead picks the right one.
+    [$.open_tuple, $.doc_string_binding],
   ],
 
   supertypes: $ => [
@@ -287,7 +290,17 @@ module.exports = grammar({
       $._expression,
       $.assignment,
       $.open_tuple,
+      $.doc_string_binding,
     ),
+
+    // Julia's docstring form: `"""doc""" target` or `"""doc""" target = rhs`.
+    // JuliaSyntax emits `(doc string target)` at block / toplevel position.
+    // Low precedence so `f = "str"` followed by `foo` on next line stays
+    // separate statements (separated by _terminator).
+    doc_string_binding: $ => prec(-1, seq(
+      $.string_literal,
+      $._block_form,
+    )),
 
     _bracket_form: $ => choice(
       $._expression,

@@ -121,8 +121,29 @@
         {
           "type": "SYMBOL",
           "name": "open_tuple"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "doc_string_binding"
         }
       ]
+    },
+    "doc_string_binding": {
+      "type": "PREC",
+      "value": -1,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "string_literal"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "_block_form"
+          }
+        ]
+      }
     },
     "_bracket_form": {
       "type": "CHOICE",
@@ -9545,6 +9566,10 @@
     [
       "block",
       "_bracket_form"
+    ],
+    [
+      "open_tuple",
+      "doc_string_binding"
     ]
   ],
   "precedences": [],
