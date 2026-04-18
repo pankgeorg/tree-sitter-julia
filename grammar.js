@@ -99,9 +99,10 @@ const ESCAPE_SEQUENCE = token(seq(
   '\\',
   choice(
     /[^uUx0-7]/,
-    /[uU][0-9a-fA-F]{1,6}/, // unicode codepoints
+    /u[0-9a-fA-F]{1,4}/, // \u supports up to 4 hex digits (BMP)
+    /U[0-9a-fA-F]{1,8}/, // \U supports up to 8 hex digits (full codespace)
     /[0-7]{1,3}/,
-    /x[0-9a-fA-F]{2}/,
+    /x[0-9a-fA-F]{1,2}/, // \x supports 1 or 2 hex digits
   ),
 ));
 
