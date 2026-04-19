@@ -688,14 +688,9 @@ module.exports = grammar({
       // Same keywords but carrying an `!` / word-tail suffix, e.g. `in!`,
       // `isa!`, `mutable!` — so function names like `in!(x, s)` parse as a
       // single identifier. JuliaSyntax permits any word identifier to carry
-      // an `!`-suffix; these rules mirror that without invoking the regular
+      // an `!`-suffix; this rule mirrors that without invoking the regular
       // `_word_identifier` (which forbids these words as identifier starts).
-      prec(-1, alias($._public_identifier, $.identifier)),
-      prec(-1, alias($._primitive_identifier, $.identifier)),
-      prec(-1, alias($._abstract_identifier, $.identifier)),
-      prec(-1, alias($._mutable_identifier, $.identifier)),
-      prec(-1, alias($._in_identifier, $.identifier)),
-      prec(-1, alias($._isa_identifier, $.identifier)),
+      prec(-1, alias($._contextual_kw_with_tail, $.identifier)),
       alias($._begin_identifier, $.identifier),    // begin as identifier via external scanner (a[begin+1:end])
       alias($._emoji_identifier, $.identifier),    // SMP emoji identifiers via external scanner
     ),
@@ -1209,15 +1204,14 @@ module.exports = grammar({
 
     _word_identifier: _ => identifierStartRest(),
 
-    // Contextual-keyword identifiers WITH `!` / word tail (required).
-    // Used as `alias($._<kw>_identifier, $.identifier)`; the no-tail case is
-    // handled by the plain `alias('kw', $.identifier)` alternative.
-    _public_identifier: $ => seq('public', $._ident_tail),
-    _primitive_identifier: $ => seq('primitive', $._ident_tail),
-    _abstract_identifier: $ => seq('abstract', $._ident_tail),
-    _mutable_identifier: $ => seq('mutable', $._ident_tail),
-    _in_identifier: $ => seq('in', $._ident_tail),
-    _isa_identifier: $ => seq('isa', $._ident_tail),
+    // Contextual-keyword identifiers WITH `!` / word tail. Used via
+    // `alias($._contextual_kw_with_tail, $.identifier)`; the bare-keyword
+    // case (no tail) is still handled by the plain `alias('kw', $.identifier)`
+    // alternatives in `_primary_expression`.
+    _contextual_kw_with_tail: $ => seq(
+      choice('public', 'primitive', 'abstract', 'mutable', 'in', 'isa'),
+      $._ident_tail,
+    ),
 
     // Julia identifiers may contain '!' anywhere except at the start,
     // UNLESS the '!' is followed by '=' (which starts the `!=` operator).
