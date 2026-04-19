@@ -308,7 +308,10 @@ module.exports = grammar({
     ),
 
     open_tuple: $ => prec(PREC.tuple, choice(
-      seq($._expression, repeat1(seq(',', $._expression)), optional(',')),  // x, y [, z ...] [,]
+      // A `_terminator` after the comma lets open_tuple span multiple lines
+      // (`a, b,\n c = expr`, `return a,\n b,\n c`). Pre-change tree-sitter
+      // would break the tuple at the newline; Julia's parser accepts this.
+      seq($._expression, repeat1(seq(',', optional($._terminator), $._expression)), optional(',')),
       seq($._expression, ','),  // x,  (trailing comma destructuring)
     )),
 
