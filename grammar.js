@@ -1248,7 +1248,10 @@ module.exports = grammar({
       const dec = numeral('0-9');
       const hex = numeral('0-9a-fA-F');
       const exponent = /[eEf][+-]?\d+/;
-      const hex_exponent = /p[+-]?\d+/;
+      // Julia accepts both `p` and `P` for the hex-float binary exponent
+      // (case-insensitive, per Julia's lexer). `0x1p0` and `0x1P0` are both
+      // the same literal; tree-sitter previously accepted only lowercase.
+      const hex_exponent = /[pP][+-]?\d+/;
 
       const leading_period = token(seq(
         '.',
