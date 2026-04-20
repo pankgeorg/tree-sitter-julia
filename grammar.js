@@ -260,6 +260,11 @@ module.exports = grammar({
     // `return "s" , x` — doc-string-binding vs open_tuple with string LHS.
     // GLR keeps both live; the `_terminator?` look-ahead picks the right one.
     [$.open_tuple, $.doc_string_binding],
+    // `:@m.n` — macro_identifier has `_scoped_identifier` as one of its
+    // choices, and the same `@ident.ident` shape can also reduce as a
+    // plain macro_identifier wrapping an identifier with `.` juxtaposed.
+    // Letting GLR keep both alive lets the parser pick the scoped form
+    // when `.` follows.
   ],
 
   supertypes: $ => [
@@ -987,6 +992,13 @@ module.exports = grammar({
         $._string,
         $.identifier,
         alias($._emoji_identifier, $.identifier), // :👍
+        // `:@m`, `:@foo` — macro identifier after colon. Uses a
+        // restricted form (`@` + identifier / operator / var-ident /
+        // emoji) rather than the full `macro_identifier` rule, because
+        // allowing `_scoped_identifier` here caused catastrophic LR
+        // state blowup (parser.c > 100 MB). Scoped macros (`:@A.foo`)
+        // remain unsupported — use `:(Symbol("@A.foo"))` or similar.
+        alias($._simple_macro_identifier, $.macro_identifier),
         $.operator,
         seq($._immediate_brace, $.curly_expression),
         seq($._immediate_bracket, $._array),
@@ -1173,6 +1185,17 @@ module.exports = grammar({
 
 
     // Tokens
+
+    // Narrow `macro_identifier` variant for use inside quote_expression.
+    // Skips the scoped `_scoped_identifier` branch to keep parser.c small.
+    _simple_macro_identifier: $ => seq('@', choice(
+      $.identifier,
+      $.operator,
+      alias($._syntactic_operator, $.operator),
+      $.var_identifier,
+      prec(-1, alias('var', $.identifier)),
+      parenthesize($.identifier),
+    )),
 
     macro_identifier: $ => seq('@', choice(
       $.identifier,

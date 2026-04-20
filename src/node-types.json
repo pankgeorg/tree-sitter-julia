@@ -2431,6 +2431,10 @@
           "named": true
         },
         {
+          "type": "macro_identifier",
+          "named": true
+        },
+        {
           "type": "matrix_expression",
           "named": true
         },

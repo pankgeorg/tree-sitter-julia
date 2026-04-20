@@ -3739,6 +3739,15 @@
                 "value": "identifier"
               },
               {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_simple_macro_identifier"
+                },
+                "named": true,
+                "value": "macro_identifier"
+              },
+              {
                 "type": "SYMBOL",
                 "name": "operator"
               },
@@ -4840,6 +4849,71 @@
           }
         ]
       }
+    },
+    "_simple_macro_identifier": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "@"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "identifier"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "operator"
+            },
+            {
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_syntactic_operator"
+              },
+              "named": true,
+              "value": "operator"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "var_identifier"
+            },
+            {
+              "type": "PREC",
+              "value": -1,
+              "content": {
+                "type": "ALIAS",
+                "content": {
+                  "type": "STRING",
+                  "value": "var"
+                },
+                "named": true,
+                "value": "identifier"
+              }
+            },
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "("
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "identifier"
+                },
+                {
+                  "type": "STRING",
+                  "value": ")"
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     "macro_identifier": {
       "type": "SEQ",
