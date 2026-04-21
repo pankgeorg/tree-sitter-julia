@@ -894,7 +894,10 @@ module.exports = grammar({
     ),
 
     parametrized_type_expression: $ => seq(
-      $._primary_expression,
+      // `*{T}` / `+{T}` — an operator can carry type parameters too
+      // (used for `Core.apply_type(+, T)` style). Mirrors `call_expression`'s
+      // `choice($._primary_expression, $.operator)` LHS shape.
+      choice($._primary_expression, $.operator),
       $._immediate_brace,
       $.curly_expression,
     ),
