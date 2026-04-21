@@ -39,9 +39,19 @@ PREC.assign = -2;
 PREC.stmt = -3;
 PREC.macro_arg = -4;
 
-// Julia operators can have subscript/superscript suffixes: +₁, <ₑ, →ₜ, etc.
-// U+1D62-U+1D6A (ᵢ-ᵪ), U+2070-U+209C (⁰-ₜ) minus gaps.
-const OPERATOR_SUFFIX = /[\u1D62-\u1D6A\u2070\u2071\u2074-\u207F\u2080-\u209C]*/;
+// Julia operators can carry suffix characters (`+₁`, `+̂`, `+ꜝ`, etc.).
+// Mirrors Julia's `jl_op_suffix_char` for the practical subset we see
+// in real code — widening further risks lex overlap with identifier
+// continuation. Ranges:
+//   U+0300-U+036F   combining diacritical marks (`+̂` = `+` + U+0302)
+//   U+00B2/B3/B9    Latin-1 superscripts ² ³ ¹
+//   U+1D62-U+1D6A   phonetic subscript modifier letters ᵢ…ᵪ
+//   U+2032-U+2034   prime, double prime, triple prime (′ ″ ‴)
+//   U+2070/2071     superscript 0, superscript i
+//   U+2074-U+207F   superscripts ⁴ … ⁿ (includes ⁽ ⁾ enclosures)
+//   U+2080-U+209C   subscripts ₀ … ₜ
+//   U+A71B-U+A71F   modifier letters (uparrow `ꜝ` = U+A71D etc.)
+const OPERATOR_SUFFIX = /[\u0300-\u036F\u00B2\u00B3\u00B9\u1D62-\u1D6A\u2032-\u2034\u2070\u2071\u2074-\u207F\u2080-\u209C\uA71B-\uA71F]*/;
 
 const OPERATORS = {
   assignment: `
