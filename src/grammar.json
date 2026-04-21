@@ -4817,6 +4817,19 @@
               {
                 "type": "SYMBOL",
                 "name": "interpolation_expression"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "call_expression"
+              },
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_closed_macrocall_expression"
+                },
+                "named": true,
+                "value": "macrocall_expression"
               }
             ]
           },

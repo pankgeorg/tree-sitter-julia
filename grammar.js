@@ -1187,6 +1187,11 @@ module.exports = grammar({
         alias($.tuple_expression, $.argument_list),
         $.typed_expression,
         $.interpolation_expression, // :($c -> $b) in metaprogramming
+        // `f(x) -> body` / `@nospecialize(x) -> body` — Julia's parser
+        // accepts a call or macrocall on the LHS (semantics reject at
+        // lowering, but syntactically it's a generic `(-> LHS body)`).
+        $.call_expression,
+        alias($._closed_macrocall_expression, $.macrocall_expression),
       ),
       '->',
       $._bracket_form,
