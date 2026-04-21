@@ -3512,8 +3512,17 @@
           "type": "PREC",
           "value": -4,
           "content": {
-            "type": "SYMBOL",
-            "name": "_block_form"
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "_block_form"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "generator"
+              }
+            ]
           }
         }
       }
@@ -9673,6 +9682,13 @@
     [
       "open_tuple",
       "doc_string_binding"
+    ],
+    [
+      "generator"
+    ],
+    [
+      "if_clause",
+      "binary_expression"
     ]
   ],
   "precedences": [],

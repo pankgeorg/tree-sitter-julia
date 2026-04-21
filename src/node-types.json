@@ -2199,6 +2199,10 @@
           "named": true
         },
         {
+          "type": "generator",
+          "named": true
+        },
+        {
           "type": "open_tuple",
           "named": true
         }

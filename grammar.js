@@ -275,6 +275,11 @@ module.exports = grammar({
     // plain macro_identifier wrapping an identifier with `.` juxtaposed.
     // Letting GLR keep both alive lets the parser pick the scoped form
     // when `.` follows.
+    // `@inbounds expr for i in r if c` — after `for_clause`, `if` could
+    // extend the generator (another clause) or start an outer if_statement.
+    // Self-conflict lets GLR enumerate; the `if` belongs to the generator.
+    [$.generator],
+    [$.if_clause, $.binary_expression],
   ],
 
   supertypes: $ => [
@@ -967,7 +972,14 @@ module.exports = grammar({
     // greedily extends its arg list across additional `_block_form`s rather
     // than reducing early and letting the *outer* macrocall pick the trailing
     // args up. Required for `@noinline f() = @assert false "msg"`-style idioms.
-    macro_argument_list: $ => prec.right(repeat1(prec(PREC.macro_arg, $._block_form))),
+    macro_argument_list: $ => prec.right(repeat1(prec(PREC.macro_arg, choice(
+      $._block_form,
+      // `@inbounds expr for i in range` — generator expression as the
+      // macro's argument. Without parens around the generator, the
+      // `for` trails the macro; accept it here so tree-sitter doesn't
+      // truncate the args at `f(x)` and error on the dangling `for`.
+      $.generator,
+    )))),
 
     do_clause: $ => choice(
       // With parameters + required terminator before block:
