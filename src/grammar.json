@@ -4113,6 +4113,15 @@
                 },
                 "named": true,
                 "value": "identifier"
+              },
+              {
+                "type": "ALIAS",
+                "content": {
+                  "type": "SYMBOL",
+                  "name": "_begin_identifier"
+                },
+                "named": true,
+                "value": "identifier"
               }
             ]
           }

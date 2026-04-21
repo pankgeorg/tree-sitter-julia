@@ -1063,6 +1063,10 @@ module.exports = grammar({
           $.operator,
         ),
         alias(token.immediate(KEYWORDS), $.identifier),
+        // Inside `[:begin, :end]` the external scanner emits
+        // `_begin_identifier` for `begin`/`end`; accept it here too so
+        // the quote_expression path survives the GLR race.
+        alias($._begin_identifier, $.identifier),
       ),
     )),
 
