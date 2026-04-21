@@ -1217,7 +1217,11 @@ module.exports = grammar({
     )),
 
     compound_assignment_expression: $ => prec.right(PREC.assign, seq(
-      $._primary_expression,
+      // `x::Int += 1`, `x[1]::Int += 1`, `a::Vector{Int} += [1]`:
+      // Julia allows a type-annotated lvalue on the left. Meta.parse
+      // accepts it; tree-sitter needs `typed_expression` as a valid
+      // LHS option alongside the usual primary.
+      choice($._primary_expression, $.typed_expression),
       alias($._assignment_operator, $.operator),
       $._expression,
     )),
