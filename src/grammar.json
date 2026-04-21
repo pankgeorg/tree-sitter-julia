@@ -5156,6 +5156,15 @@
                     "name": "operator"
                   },
                   {
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "_simple_macro_identifier"
+                    },
+                    "named": true,
+                    "value": "macro_identifier"
+                  },
+                  {
                     "type": "SEQ",
                     "members": [
                       {

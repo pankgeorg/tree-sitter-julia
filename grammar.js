@@ -1271,6 +1271,12 @@ module.exports = grammar({
             $.interpolation_expression,
             $.quote_expression,                             // A.:+
             $.operator,                                      // A.==, A.⋆
+            // `using A.@foo`, `import Base.Math.@horner` —
+            // macro-terminated qualified path. Uses the narrow
+            // _simple_macro_identifier to avoid the LR blowup that the
+            // full macro_identifier (with its own _scoped_identifier
+            // branch) produced when mixed in here.
+            alias($._simple_macro_identifier, $.macro_identifier),
             parenthesize(choice($._exportable, $.quote_expression)), // A.(:+)
           ),
         ),
