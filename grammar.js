@@ -689,6 +689,8 @@ module.exports = grammar({
       $._string,
       $.adjoint_expression,
       $.broadcast_call_expression,
+      $.broadcast_index_expression,
+      $.broadcast_parametrized_expression,
       $.call_expression,
       alias($._closed_macrocall_expression, $.macrocall_expression),
       $.parametrized_type_expression,
@@ -910,6 +912,23 @@ module.exports = grammar({
       $._immediate_paren,
       alias($.tuple_expression, $.argument_list),
       optional($.do_clause),
+    ),
+
+    // `a.[1]` — broadcast indexing (getindex with broadcast semantics).
+    // Shape mirrors broadcast_call_expression but with bracket-form body.
+    broadcast_index_expression: $ => seq(
+      $._primary_expression,
+      token.immediate('.'),
+      $._immediate_bracket,
+      $._array,
+    ),
+
+    // `A.{T}` — broadcast parametric type application.
+    broadcast_parametrized_expression: $ => seq(
+      $._primary_expression,
+      token.immediate('.'),
+      $._immediate_brace,
+      $.curly_expression,
     ),
 
     _qualified_macro_identifier: $ => seq(
