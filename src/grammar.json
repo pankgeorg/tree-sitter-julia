@@ -266,6 +266,22 @@
               {
                 "type": "SYMBOL",
                 "name": "float_literal"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "function_definition"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "let_statement"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "if_statement"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "compound_statement"
               }
             ]
           },

@@ -344,6 +344,14 @@ module.exports = grammar({
         $.operator,
         $.integer_literal,
         $.float_literal,
+        // `function g end = 1`, `begin x end = 1`, `let end = 1` —
+        // block-returning forms as the assignment LHS. Meta.parse
+        // accepts the shape (e.g. `(= (function g) 1)`). Already
+        // supported for compound assignments (`.+=` / `.=`).
+        $.function_definition,
+        $.let_statement,
+        $.if_statement,
+        $.compound_statement,
       ),
       alias('=', $.operator),
       $._block_form,
