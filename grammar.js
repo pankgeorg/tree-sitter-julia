@@ -442,6 +442,16 @@ module.exports = grammar({
     signature: $ => prec(PREC.stmt, choice(
       $.identifier, // zero-method definition
       $.var_identifier, // var"..." zero-method definition
+      // `function var end`, `macro var(x) ... end`: the `var` contextual
+      // keyword (reserved for `var"..."` strings) standing in signature
+      // position as a plain name. Inline alias path — prec(-1) defers to
+      // `var_identifier` when an immediate `"..."` follows.
+      prec(-1, alias('var', $.identifier)),
+      prec(-1, alias(seq(
+        alias('var', $.identifier),
+        $._immediate_paren,
+        alias($.tuple_expression, $.argument_list),
+      ), $.call_expression)),
       $.interpolation_expression, // function $f end (interpolated name)
       $.operator, // function ⊇ end (operator-named zero-method def)
       $.call_expression,

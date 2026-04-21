@@ -677,6 +677,55 @@
             "name": "var_identifier"
           },
           {
+            "type": "PREC",
+            "value": -1,
+            "content": {
+              "type": "ALIAS",
+              "content": {
+                "type": "STRING",
+                "value": "var"
+              },
+              "named": true,
+              "value": "identifier"
+            }
+          },
+          {
+            "type": "PREC",
+            "value": -1,
+            "content": {
+              "type": "ALIAS",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "STRING",
+                      "value": "var"
+                    },
+                    "named": true,
+                    "value": "identifier"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "_immediate_paren"
+                  },
+                  {
+                    "type": "ALIAS",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "tuple_expression"
+                    },
+                    "named": true,
+                    "value": "argument_list"
+                  }
+                ]
+              },
+              "named": true,
+              "value": "call_expression"
+            }
+          },
+          {
             "type": "SYMBOL",
             "name": "interpolation_expression"
           },
