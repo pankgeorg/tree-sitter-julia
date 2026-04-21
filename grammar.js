@@ -1028,6 +1028,10 @@ module.exports = grammar({
         // state blowup (parser.c > 100 MB). Scoped macros (`:@A.foo`)
         // remain unsupported — use `:(Symbol("@A.foo"))` or similar.
         alias($._simple_macro_identifier, $.macro_identifier),
+        // `:~` / `:.~`. `~` has an external-scanner token
+        // `_binary_tilde` that preemptively claims the char in binary
+        // position; we accept it here so quote_expression wins the GLR.
+        alias($._binary_tilde, $.operator),
         $.operator,
         seq($._immediate_brace, $.curly_expression),
         seq($._immediate_bracket, $._array),
