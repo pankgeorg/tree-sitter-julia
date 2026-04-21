@@ -16,8 +16,8 @@ tuple collections
   (line_comment)
   (parenthesized_expression (integer_literal))
   (line_comment)
-  (tuple_expression (integer_literal))
-  (tuple_expression (integer_literal) (integer_literal) (integer_literal)))
+  (tuple_expression (integer_literal) (trailing_comma))
+  (tuple_expression (integer_literal) (integer_literal) (integer_literal) (trailing_comma)))
 
 
 ==============================
@@ -40,19 +40,24 @@ named tuple collections
     (assignment (identifier) (operator) (integer_literal)))
   (line_comment)
   (tuple_expression
-    (assignment (identifier) (operator) (integer_literal)))
+    (assignment (identifier) (operator) (integer_literal))
+    (trailing_comma))
   (tuple_expression
     (assignment (identifier) (operator) (integer_literal))
     (assignment (identifier) (operator) (integer_literal)))
-  (tuple_expression)
+  (tuple_expression (parameters_separator))
   (tuple_expression
+    (parameters_separator)
     (identifier))
   (tuple_expression
+    (parameters_separator)
     (assignment (identifier) (operator) (integer_literal)))
   (tuple_expression
+    (parameters_separator)
     (assignment (identifier) (operator) (integer_literal))
     (assignment (identifier) (operator) (integer_literal)))
   (tuple_expression
+    (parameters_separator)
     (identifier)
     (field_expression (identifier) (identifier))))
 
@@ -76,7 +81,7 @@ vector array collections
   (vector_expression)
   (line_comment)
   (vector_expression (identifier))
-  (vector_expression (identifier))
+  (vector_expression (identifier) (trailing_comma))
   (vector_expression (integer_literal) (integer_literal))
   (line_comment)
   (vector_expression
@@ -145,6 +150,47 @@ Int[1 2 3 4]
         (integer_literal)
         (integer_literal)
         (integer_literal)))))
+
+
+==============================
+empty ncat expressions
+==============================
+
+[;]
+[;;]
+[;;;]
+
+---
+
+(source_file
+  (matrix_expression)
+  (matrix_expression)
+  (matrix_expression))
+
+
+==============================
+bracescat expressions
+==============================
+
+{x y}
+{a ;; b}
+{x ;;; y}
+{a ;;;; b}
+
+---
+
+(source_file
+  (curly_expression
+    (matrix_row (identifier) (identifier)))
+  (curly_expression
+    (matrix_row (identifier))
+    (matrix_row (identifier)))
+  (curly_expression
+    (matrix_row (identifier))
+    (matrix_row (identifier)))
+  (curly_expression
+    (matrix_row (identifier))
+    (matrix_row (identifier))))
 
 
 ========================================

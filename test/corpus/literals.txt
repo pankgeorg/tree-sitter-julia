@@ -112,7 +112,7 @@ band = "Interpol"
   (string_literal (escape_sequence))
   (string_literal (content))
   (string_literal (content) (escape_sequence) (content) (escape_sequence) (content))
-  (string_literal (content))
+  (string_literal (triple_quote) (content))
   (assignment
     (identifier)
     (operator)
@@ -154,6 +154,7 @@ echo "\033[31mred\033[m"
   (command_literal (content) (string_interpolation (identifier)))
   (command_literal (content) (escape_sequence) (content) (escape_sequence))
   (command_literal
+   (triple_backtick)
    (content)
    (escape_sequence)
    (content)

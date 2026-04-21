@@ -189,10 +189,8 @@
   (continue_statement)
 ] @keyword.repeat
 
-[
-  "const"
-  "mutable"
-] @keyword.modifier
+"const" @keyword.modifier
+(mutable_keyword) @keyword.modifier
 
 (function_definition
   [
@@ -218,9 +216,11 @@
 (module_definition
   [
     "module"
-    "baremodule"
     "end"
   ] @keyword.import)
+
+(module_definition
+  (baremodule_keyword) @keyword.import)
 
 (export_statement
   "export" @keyword.import)
@@ -242,10 +242,12 @@
 
 (struct_definition
   [
-    "mutable"
     "struct"
     "end"
   ] @keyword.type)
+
+(struct_definition
+  (mutable_keyword) @keyword.type)
 
 (abstract_definition
   [
@@ -258,6 +260,12 @@
   [
     "primitive"
     "type"
+    "end"
+  ] @keyword.type)
+
+(typegroup_definition
+  [
+    "typegroup"
     "end"
   ] @keyword.type)
 
