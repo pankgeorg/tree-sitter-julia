@@ -652,6 +652,11 @@ module.exports = grammar({
         $._scoped_identifier,
         $.macro_identifier, // import ..@symcheck
         $.operator,        // import .⋆
+        // `import ..$name` / `import ..($name)` — interpolated module
+        // name after relative dots. Supports Pluto-style workspace
+        // switches (`import ..($(old_workspace_name))`).
+        $.interpolation_expression,
+        parenthesize($.interpolation_expression),
       ),
     ),
 

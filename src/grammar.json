@@ -1743,6 +1743,27 @@
             {
               "type": "SYMBOL",
               "name": "operator"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "interpolation_expression"
+            },
+            {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "("
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "interpolation_expression"
+                },
+                {
+                  "type": "STRING",
+                  "value": ")"
+                }
+              ]
             }
           ]
         }
