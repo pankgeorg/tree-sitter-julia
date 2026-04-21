@@ -1233,7 +1233,17 @@ module.exports = grammar({
       // Julia allows a type-annotated lvalue on the left. Meta.parse
       // accepts it; tree-sitter needs `typed_expression` as a valid
       // LHS option alongside the usual primary.
-      choice($._primary_expression, $.typed_expression),
+      //
+      // `let x = v; arr; end .= 4` and `begin ...; arr end .= 4`:
+      // Julia treats the block's last expression as the broadcast
+      // target. We accept let/compound_statement as LHS so these
+      // block-returning forms participate in `.=` / `.+=` etc.
+      choice(
+        $._primary_expression,
+        $.typed_expression,
+        $.let_statement,
+        $.compound_statement,
+      ),
       alias($._assignment_operator, $.operator),
       $._expression,
     )),

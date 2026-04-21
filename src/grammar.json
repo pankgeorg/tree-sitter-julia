@@ -4924,6 +4924,14 @@
               {
                 "type": "SYMBOL",
                 "name": "typed_expression"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "let_statement"
+              },
+              {
+                "type": "SYMBOL",
+                "name": "compound_statement"
               }
             ]
           },

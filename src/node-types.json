@@ -1048,6 +1048,14 @@
         {
           "type": "_expression",
           "named": true
+        },
+        {
+          "type": "compound_statement",
+          "named": true
+        },
+        {
+          "type": "let_statement",
+          "named": true
         }
       ]
     }
