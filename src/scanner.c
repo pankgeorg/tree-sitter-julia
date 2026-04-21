@@ -600,6 +600,11 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
         int32_t next = lexer->lookahead;
         // Don't emit for `..` (ellipsis), `.=`, or nothing after dot.
         if (next == '.' || next == '=' || next == 0) return false;
+        // Don't emit for `.<digit>` — that's a leading-period float
+        // literal (`.1`, `.42`). Stealing the `.` breaks `@foo .1` and
+        // any other expression position where a bare `.` is not a
+        // scope operator.
+        if (next >= '0' && next <= '9') return false;
         lexer->result_symbol = SCOPE_DOT;
         return true;
     }
