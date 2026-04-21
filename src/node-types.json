@@ -2469,6 +2469,10 @@
           "named": true
         },
         {
+          "type": "operator",
+          "named": true
+        },
+        {
           "type": "parametrized_type_expression",
           "named": true
         },
