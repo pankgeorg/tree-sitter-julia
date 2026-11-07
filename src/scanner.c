@@ -430,6 +430,11 @@ static bool scan_ident_tail(TSLexer *lexer) {
 
 bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
     Scanner *scanner_state = (Scanner *)payload;
+    // Whitespace right at the scanner's position, recorded before any helper
+    // below (scan_begin_identifier, scan_emoji_identifier) skips it: the
+    // spaced-colon check needs to know about it even when a helper already
+    // moved past it (e.g. `for i = 1 : n`, where BEGIN_IDENTIFIER is valid).
+    bool ws_at_entry = (lexer->lookahead == ' ' || lexer->lookahead == '\t');
     if (valid_symbols[IMMEDIATE_PAREN] && lexer->lookahead == '(') {
         lexer->result_symbol = IMMEDIATE_PAREN;
         return true;
@@ -552,7 +557,7 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
         while (lexer->lookahead == ' ' || lexer->lookahead == '\t') {
             lexer->advance(lexer, true);
         }
-        bool has_space_before = saw_ws_here || scanner_state->saw_ws_before_colon;
+        bool has_space_before = saw_ws_here || ws_at_entry || scanner_state->saw_ws_before_colon;
 
         if (lexer->lookahead == ':') {
             lexer->advance(lexer, false);

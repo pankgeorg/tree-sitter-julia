@@ -535,6 +535,54 @@ a : b
     (identifier)))
 
 ==============================
+spaced range colon in for bindings and brackets
+==============================
+
+for i = 1 : n
+end
+for j in a + 1 : -1 : 2
+end
+[1 : n]
+[1 :a]
+
+---
+(source_file
+  (for_statement
+    (for_binding
+      (identifier)
+      (operator)
+      (range_expression
+        (integer_literal)
+        (operator)
+        (identifier))))
+  (for_statement
+    (for_binding
+      (identifier)
+      (operator)
+      (range_expression
+        (range_expression
+          (binary_expression
+            (identifier)
+            (operator)
+            (integer_literal))
+          (operator)
+          (unary_expression
+            (operator)
+            (integer_literal)))
+        (operator)
+        (integer_literal))))
+  (vector_expression
+    (range_expression
+      (integer_literal)
+      (operator)
+      (identifier)))
+  (matrix_expression
+    (matrix_row
+      (integer_literal)
+      (quote_expression
+        (identifier)))))
+
+==============================
 ternary beats spaced range colon
 ==============================
 
@@ -898,4 +946,5 @@ f(x)y
       (argument_list
         (integer_literal)))
     (identifier)))
+
 
