@@ -6420,6 +6420,15 @@
           "value": "identifier"
         },
         {
+          "type": "ALIAS",
+          "content": {
+            "type": "SYMBOL",
+            "name": "_string_suffix_word"
+          },
+          "named": true,
+          "value": "identifier"
+        },
+        {
           "type": "SYMBOL",
           "name": "integer_literal"
         },
@@ -9886,6 +9895,10 @@
     {
       "type": "SYMBOL",
       "name": "_scope_dot"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_string_suffix_word"
     }
   ],
   "inline": [

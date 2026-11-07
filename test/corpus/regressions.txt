@@ -948,3 +948,27 @@ f(x)y
     (identifier)))
 
 
+==============================
+word operators as string-macro suffixes
+==============================
+
+x"s"in
+x`s`isa
+x"s" in y
+
+---
+(source_file
+  (prefixed_string_literal
+    prefix: (identifier)
+    (content)
+    suffix: (identifier))
+  (prefixed_command_literal
+    prefix: (identifier)
+    (content)
+    suffix: (identifier))
+  (binary_expression
+    (prefixed_string_literal
+      prefix: (identifier)
+      (content))
+    (operator)
+    (identifier)))

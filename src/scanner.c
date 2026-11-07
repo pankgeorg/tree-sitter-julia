@@ -37,6 +37,7 @@ enum TokenType {
     SPACED_RANGE_COLON,
     TERNARY_COLON,
     SCOPE_DOT,
+    STRING_SUFFIX_WORD,
 };
 
 // Scanner state: remembers whether the last scanner call observed
@@ -450,6 +451,29 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
     } else if (valid_symbols[IMMEDIATE_COMMAND_START] && lexer->lookahead == '`') {
         lexer->result_symbol = IMMEDIATE_COMMAND_START;
         return true;
+    }
+
+    // `x"s"in`, `x`s`isa`: a word operator flush against the closing quote of a
+    // prefixed string/command is its suffix (JuliaSyntax: string macro suffix).
+    // Only `in`/`isa`; other suffixes are ordinary identifiers.
+    if (valid_symbols[STRING_SUFFIX_WORD] && lexer->lookahead == 'i') {
+        char buf[4] = {0};
+        int n = 0;
+        while (n < 3 && lexer->lookahead >= 'a' && lexer->lookahead <= 'z') {
+            buf[n++] = (char)lexer->lookahead;
+            lexer->advance(lexer, false);
+        }
+        int32_t after = lexer->lookahead;
+        bool ident_cont = (after >= 'a' && after <= 'z') || (after >= 'A' && after <= 'Z') ||
+                          (after >= '0' && after <= '9') || after == '_' || after == '!' ||
+                          after > 0x7f;
+        if (!ident_cont && ((n == 2 && memcmp(buf, "in", 2) == 0) ||
+                            (n == 3 && memcmp(buf, "isa", 3) == 0))) {
+            lexer->mark_end(lexer);
+            lexer->result_symbol = STRING_SUFFIX_WORD;
+            return true;
+        }
+        return false;
     }
 
     if (valid_symbols[IDENT_TAIL] && scan_ident_tail(lexer)) {

@@ -257,6 +257,7 @@ module.exports = grammar({
     $._spaced_range_colon,
     $._ternary_colon,
     $._scope_dot,
+    $._string_suffix_word,
   ],
 
   conflicts: $ => [
@@ -1519,6 +1520,10 @@ module.exports = grammar({
     _string_macro_suffix: $ => choice(
       $.identifier,
       alias(KEYWORDS, $.identifier),
+      // `x"s"in`, `x`s`isa`: the word operators as suffixes, only when flush
+      // against the closing quote (`x"s" in y` stays a binary `in`). An external
+      // token: the internal lexer always turns `in`/`isa` into the operator.
+      alias($._string_suffix_word, $.identifier),
       $.integer_literal,
       $.float_literal,
     ),
