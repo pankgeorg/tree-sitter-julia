@@ -49,6 +49,19 @@ differently or fail:
 Gaps in the JuliaSyntax.jl parser test corpus: see
 [`TOPIARY_PLAN.md`](TOPIARY_PLAN.md) for the full list and status.
 
+## WebAssembly build
+
+`npm run build:wasm` (`tree-sitter build --wasm -o tree-sitter-julia.wasm`) builds the grammar
+for [web-tree-sitter](https://www.npmjs.com/package/web-tree-sitter); the built
+`tree-sitter-julia.wasm` is committed. The checks use it:
+
+- `npm run test:corpus`: the corpus tests (`tree-sitter test --wasm`);
+- `npm run test:juliasyntax`: the grammar compared against Julia's own parser (JuliaSyntax,
+  also compiled to WebAssembly), with no Julia install. See
+  [test/juliasyntax/README.md](test/juliasyntax/README.md).
+
+`npm test` runs both. `npm run test:native` runs the Node binding's native tests.
+
 ## References
 
 - [The Julia Parser](https://github.com/JuliaLang/julia/blob/master/src/julia-parser.scm)

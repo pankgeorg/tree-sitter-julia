@@ -48,3 +48,7 @@ zig-out/
 *.tar.gz
 *.tgz
 *.zip
+
+# The grammar's Wasm build and the JuliaSyntax Wasm reference are shipped
+!tree-sitter-julia.wasm
+!test/juliasyntax/juliasyntax.wasm
