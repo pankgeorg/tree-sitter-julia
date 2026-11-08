@@ -124,6 +124,7 @@ end
 try statements
 ==============================
 
+try x end
 try catch end
 try finally end
 
@@ -150,6 +151,9 @@ end
 ---
 
 (source_file
+  (try_statement
+    (block (identifier)))
+
   (try_statement
     (catch_clause))
 
@@ -360,8 +364,8 @@ import Base: @view as @v
 
   ;; Relative paths
   (using_statement
-    (import_path (identifier))
-    (import_path (identifier)))
+    (import_path (relative_dot) (relative_dot) (identifier))
+    (import_path (relative_dot) (relative_dot) (identifier)))
 
   ;; List import
   (import_statement (identifier) (identifier) (identifier))
@@ -381,6 +385,39 @@ import Base: @view as @v
     (selected_import
       (identifier)
       (import_alias (macro_identifier (identifier)) (macro_identifier (identifier))))))
+
+
+==============================
+advanced import paths
+==============================
+
+import A.:+
+import A.:(+)
+import A.(:+)
+using A: b.:c
+
+---
+
+(source_file
+  (import_statement
+    (import_path
+      (identifier)
+      (quote_expression (operator))))
+  (import_statement
+    (import_path
+      (identifier)
+      (quote_expression
+        (parenthesized_expression (operator)))))
+  (import_statement
+    (import_path
+      (identifier)
+      (quote_expression (operator))))
+  (using_statement
+    (selected_import
+      (identifier)
+      (import_path
+        (identifier)
+        (quote_expression (identifier))))))
 
 
 ===============================
@@ -472,3 +509,22 @@ global function bar() 4 end
         (call_expression (identifier) (argument_list)))
         (block
           (integer_literal)))))
+
+
+===============================
+public statements
+===============================
+
+module Mod
+  public a, b
+  public @macroname
+end
+
+---
+
+(source_file
+  (module_definition
+    name: (identifier)
+    (block
+      (public_statement (identifier) (identifier))
+      (public_statement (macro_identifier (identifier))))))

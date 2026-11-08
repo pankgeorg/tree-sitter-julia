@@ -17,7 +17,7 @@ end
   (module_definition
     name: (identifier)
     (block
-      (module_definition name: (identifier))
+      (module_definition (baremodule_keyword) name: (identifier))
       (module_definition name: (identifier)))))
 
 
@@ -106,6 +106,7 @@ end
         (identifier))))
 
   (struct_definition
+    (mutable_keyword)
     (type_head (identifier))
     (block
       (identifier)
@@ -156,6 +157,7 @@ end
 
   ;; Parametric fields
   (struct_definition
+    (mutable_keyword)
     (type_head
       (binary_expression
         (identifier)
@@ -167,6 +169,57 @@ end
         (parametrized_type_expression
           (identifier)
           (curly_expression (identifier)))))))
+
+
+==============================
+typegroup definitions
+==============================
+
+typegroup
+    struct A end
+end
+
+typegroup
+    struct Node
+        edges::Vector{Edge}
+    end
+
+    struct Edge
+        from::Node
+        to::Node
+    end
+end
+
+typegroup struct A end end
+
+---
+
+(source_file
+  (typegroup_definition
+    (block
+      (struct_definition
+        (type_head (identifier)))))
+
+  (typegroup_definition
+    (block
+      (struct_definition
+        (type_head (identifier))
+        (block
+          (typed_expression
+            (identifier)
+            (parametrized_type_expression
+              (identifier)
+              (curly_expression (identifier))))))
+      (struct_definition
+        (type_head (identifier))
+        (block
+          (typed_expression (identifier) (identifier))
+          (typed_expression (identifier) (identifier))))))
+
+  (typegroup_definition
+    (block
+      (struct_definition
+        (type_head (identifier))))))
 
 
 ========================================
@@ -403,6 +456,7 @@ function g(; x, y::Int, z = 1, kwargs...) nothing end
         (argument_list
           (identifier)
           (splat_expression (identifier))
+          (parameters_separator)
           (splat_expression (identifier))))))
 
   (function_definition
@@ -410,6 +464,7 @@ function g(; x, y::Int, z = 1, kwargs...) nothing end
       (call_expression
         (identifier)
         (argument_list
+          (parameters_separator)
           (identifier)
           (typed_expression
             (identifier)
@@ -645,6 +700,7 @@ Base.show(io::IO, ::MIME"text/plain", m::Method; kwargs...) = show_method(io, m,
             prefix: (identifier)
             (content)))
         (typed_expression (identifier) (identifier))
+        (parameters_separator)
         (splat_expression (identifier))))
     (operator)
     (call_expression

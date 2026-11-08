@@ -40,6 +40,8 @@ Base.:+
 
 df."a"
 
+x.?
+
 ---
 
 (source_file
@@ -73,7 +75,10 @@ df."a"
   (field_expression
     (identifier)
     (string_literal
-      (content))))
+      (content)))
+  (field_expression
+    (identifier)
+    (identifier)))
 
 ==============================
 index expressions
@@ -132,7 +137,7 @@ $(usertype){T}
         (identifier)))
     (curly_expression
       (identifier)))
-  (compound_assignment_expression
+  (binary_expression
     (curly_expression
       (quote_expression
         (identifier)))
@@ -177,6 +182,7 @@ new{typeof(xs)}(xs)
     (identifier)
     (argument_list
       (identifier)
+      (parameters_separator)
       (assignment
         (identifier)
         (operator)
@@ -185,6 +191,7 @@ new{typeof(xs)}(xs)
     (identifier)
     (argument_list
       (identifier)
+      (parameters_separator)
       (identifier)))
   (call_expression
     (parametrized_type_expression
@@ -477,6 +484,7 @@ end
           (identifier)))))
   (line_comment)
   (struct_definition
+    (mutable_keyword)
     (type_head
       (interpolation_expression
         (parenthesized_expression
@@ -676,3 +684,42 @@ a -> a = 2, 3
         (operator)
         (integer_literal)))
     (integer_literal)))
+
+
+==============================
+tuple destructuring with trailing comma
+==============================
+
+x, = xs
+a, b, = (1, 2, 3)
+
+---
+
+(source_file
+  (assignment
+    (open_tuple (identifier))
+    (operator)
+    (identifier))
+  (assignment
+    (open_tuple (identifier) (identifier))
+    (operator)
+    (tuple_expression
+      (integer_literal)
+      (integer_literal)
+      (integer_literal))))
+
+
+==============================
+unicode identifier start characters
+==============================
+
+€price = 100
+£cost = 200
+∞limit = 999
+
+---
+
+(source_file
+  (assignment (identifier) (operator) (integer_literal))
+  (assignment (identifier) (operator) (integer_literal))
+  (assignment (identifier) (operator) (integer_literal)))

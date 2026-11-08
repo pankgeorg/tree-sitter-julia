@@ -149,7 +149,8 @@ x |>
     (splat_expression
       (range_expression
         (integer_literal)
-        (integer_literal)))))
+        (integer_literal)))
+    (trailing_comma)))
 
 
 ==============================
