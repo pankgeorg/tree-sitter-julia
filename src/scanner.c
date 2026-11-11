@@ -14,10 +14,15 @@ typedef struct {
     uint8_t *buf; // text of the token being lexed (block comments can be long)
     size_t n;     // bytes consumed from the TSLexer so far
     size_t cap;
-    uint8_t after_operator; // no left operand next: the last token was an operator or keyword (serialized)
+    uint8_t after_operator; // no left operand next: the last token was an operator or keyword; for an
+                            // operator right after an operand (infix), 2: the line ends after it (the
+                            // operand is on the next), 3: `(` follows it directly (serialized)
     uint8_t in_import;      // inside `import`/`using`, up to a newline, `;` or closing bracket (serialized)
     uint8_t in_head;        // in the head of `if`/`elseif`/`while`/`for`, up to a newline or `;`:
                             // not space-sensitive there (serialized)
+    uint8_t doc_open;       // strings open since one that started a statement (`"a $("b")"`: 2) (serialized)
+    uint8_t after_doc;      // the last token closed such a string: what follows on its line is documented
+                            // (serialized)
     size_t tok_end;         // length of the token scan_token just emitted (bytes of buf)
 } TokBuf;
 
@@ -32,21 +37,25 @@ void tree_sitter_julia_external_scanner_destroy(void *payload) {
     if (t) { free(t->buf); free(t); }
 }
 
-// Three bytes of state: whether the next token has no left operand (after an operator or keyword: `a && !b`
+// Five bytes of state: whether the next token has no left operand (after an operator or keyword: `a && !b`
 // does not juxtapose, `return -1` is a prefix minus), whether we are in an import path (`import Base.*`)
-// and whether we are in a block head (`if x :a`: a range). Everything else is in the text ahead and in
-// valid_symbols.
+// and whether we are in a block head (`if x :a`: a range); two more for docstrings on the line of what they
+// document. Everything else is in the text ahead and in valid_symbols.
 unsigned tree_sitter_julia_external_scanner_serialize(void *payload, char *buffer) {
     buffer[0] = (char)((TokBuf *)payload)->after_operator;
     buffer[1] = (char)((TokBuf *)payload)->in_import;
     buffer[2] = (char)((TokBuf *)payload)->in_head;
-    return 3;
+    buffer[3] = (char)((TokBuf *)payload)->doc_open;
+    buffer[4] = (char)((TokBuf *)payload)->after_doc;
+    return 5;
 }
 
 void tree_sitter_julia_external_scanner_deserialize(void *payload, const char *buffer, unsigned size) {
     ((TokBuf *)payload)->after_operator = size > 0 ? (uint8_t)buffer[0] : 0;
     ((TokBuf *)payload)->in_import = size > 1 ? (uint8_t)buffer[1] : 0;
     ((TokBuf *)payload)->in_head = size > 2 ? (uint8_t)buffer[2] : 0;
+    ((TokBuf *)payload)->doc_open = size > 3 ? (uint8_t)buffer[3] : 0;
+    ((TokBuf *)payload)->after_doc = size > 4 ? (uint8_t)buffer[4] : 0;
 }
 
 static size_t utf8_encode(uint8_t *b, int32_t c) {
@@ -604,15 +613,32 @@ static int32_t peek_after(TokBuf *t, TSLexer *lexer, size_t *i) {
 
 bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, const bool *valid_symbols) {
     TokBuf *t = payload;
+    // right after an operand on the same line (the parser could juxtapose); not right after a macro name,
+    // where whitespace starts the arguments (`@m *(b)`)
+    bool after_operand = valid_symbols[JUXTAPOSE] && !t->after_operator && !valid_symbols[MACRO_ARGS_PROBE] &&
+                         !(valid_symbols[CONTENT_STR_1] && valid_symbols[CONTENT_CMD_1]);
+    // where a statement starts at top level or in a module (JuliaSyntax parse_docstring there: a statement
+    // that is only a string documents what follows it on its line or the next); `public` is valid only there
+    bool stmt_start = valid_symbols[KW_PUBLIC] && !(valid_symbols[CONTENT_STR_1] && valid_symbols[CONTENT_CMD_1]);
     if (!scan(t, lexer, valid_symbols)) return false;
     TSSymbol s = lexer->result_symbol;
+    if ((s == DELIMITER_STR_1 || s == DELIMITER_STR_3) && (t->doc_open || stmt_start) && t->doc_open < 255) t->doc_open++;
+    if (s != LINE_COMMENT && s != BLOCK_COMMENT) // `"doc" #= c =# f`
+        t->after_doc = s == END_STR && t->doc_open == 1;
+    if (s == END_STR && t->doc_open) t->doc_open--;
+    if (s == NEWLINE) t->doc_open = 0; // (an unterminated string in error recovery)
     if (s != JUXTAPOSE && s != IMMEDIATE_PAREN && s != IMMEDIATE_BRACKET && s != IMMEDIATE_BRACE &&
-        s != IMMEDIATE_STRING_START && s != IMMEDIATE_COMMAND_START && s != LINE_COMMENT && s != BLOCK_COMMENT)
+        s != IMMEDIATE_STRING_START && s != IMMEDIATE_COMMAND_START && s != LINE_COMMENT && s != BLOCK_COMMENT) {
         // no left operand next: after an operator, or a keyword that does not end an expression (`return -1`)
-        t->after_operator = (s >= ASSIGNMENT_OPERATOR && s <= UNARY_OPERATOR) || s == SPACE_PREFIX_OPERATOR ||
-                            s == ELEMENT_OF ||
+        bool op = (s >= ASSIGNMENT_OPERATOR && s <= UNARY_OPERATOR) || s == SPACE_PREFIX_OPERATOR || s == ELEMENT_OF;
+        // infix: a binary operator token after an operand (not one spaced or read as a prefix: `[a -b]`,
+        // `[a <:b]`, `!`), whose right operand may follow on the next line
+        bool infix = after_operand && ((s >= ASSIGNMENT_OPERATOR && s <= TILDE_OPERATOR && s != UNARY_PLUS_OPERATOR) ||
+                                       s == ELEMENT_OF);
+        t->after_operator = op ? (infix ? 2 : 1) :
                             (s >= FIRST_KEYWORD && s <= LAST_KEYWORD && s != KW_END && s != KW_BEGIN && s != KW_BREAK &&
                              s != KW_CONTINUE); // `a[begin:i]`, `a[end - 1]`: operands
+    }
     // which line an import is on: JuliaSyntax's parser knows; here the scanner follows it. Brackets and
     // `;` are the internal lexer's and do not update this state, so look at what follows the token:
     // `import Base: (+); x.*y`, `f(:(using A), x.+y)`, `import A #= c =#; x.*y`.
@@ -638,11 +664,24 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
         // bracket pair (`a == [] isa T`), the next scanned token is not this operator's operand. An
         // opening bracket with something inside is (`.~[x]`, `-(x)`).
         size_t i = t->tok_end;
-        int32_t c = peek_after(t, lexer, &i);
+        int32_t c0 = peek_after(t, lexer, &i), c = c0;
+        bool immediate = i == t->tok_end + 1, next_line = false; // `f(; op=+⏎) where {T}`
+        while (c == '\n' || c == '\r') { c = peek_after(t, lexer, &i); next_line = true; }
         if (c == ')' || c == ']' || c == '}' || c == ',' || c == ';') t->after_operator = 0;
-        else if (c == '(' || c == '[' || c == '{') {
+        else if (!next_line && (c == '(' || c == '[' || c == '{')) {
             int32_t d = peek_after(t, lexer, &i);
             if (d == (c == '(' ? ')' : c + 2)) t->after_operator = 0;
+        }
+        if (t->after_operator >= 2) {
+            // what follows an infix operator, as far as the next token: the state must not outlive it, but
+            // tokens of the internal lexer (brackets) do not update it. So 3 only for `(` right after the
+            // operator; 2 only when the line ends (or a line comment), and the next line does not start
+            // with a bracket (`x = a +⏎ (b)⏎ y`, the newline after `(b)` ends the statement)
+            bool line_comment = c0 == '#' && !(t->n > i ? t->buf[i] == '=' : lexer->lookahead == '=');
+            if (c0 == '(' && immediate) t->after_operator = 3;
+            else if ((c0 == '\n' || c0 == '\r') && !(c == '(' || c == '[' || c == '{')) t->after_operator = 2;
+            else if (line_comment) t->after_operator = 2;
+            else t->after_operator = 1;
         }
     }
     return true;
@@ -654,7 +693,12 @@ static bool scan(TokBuf *t, TSLexer *lexer, const bool *valid_symbols) {
     // In error recovery every symbol is valid: no string context then
     bool recovering = valid_symbols[CONTENT_STR_1] && valid_symbols[CONTENT_CMD_1];
 
-    if (valid_symbols[IMMEDIATE_PAREN] && lexer->lookahead == '(') {
+    // `if m[i]*(c - 1) > s`: an operator right after an operand is infix (JuliaSyntax), so `(` starts its
+    // right operand, not the arguments of a call of the operator (`*(b)` as the first statement of the block)
+    // (the state outlives tokens of the internal lexer, `a*(b)(c)`: it counts only where an operand is
+    // expected)
+    bool operand_next = valid_symbols[INTEGER_LITERAL] && !recovering;
+    if (valid_symbols[IMMEDIATE_PAREN] && lexer->lookahead == '(' && !(t->after_operator == 3 && operand_next)) {
         lexer->result_symbol = IMMEDIATE_PAREN;
         return true;
     } else if (valid_symbols[IMMEDIATE_BRACKET] && lexer->lookahead == '[') {
@@ -679,7 +723,9 @@ static bool scan(TokBuf *t, TSLexer *lexer, const bool *valid_symbols) {
     for (;;) {
         int32_t c = lexer->lookahead;
         if (c == '\n') {
-            if (valid_symbols[NEWLINE]) {
+            // not after an infix operator: its right operand follows (`if a >⏎ b`, where `>` could
+            // otherwise end the condition and start the block as a name)
+            if (valid_symbols[NEWLINE] && !(t->after_operator == 2 && operand_next)) {
                 lexer->advance(lexer, false);
                 lexer->mark_end(lexer);
                 lexer->result_symbol = NEWLINE;
@@ -723,6 +769,39 @@ static bool scan(TokBuf *t, TSLexer *lexer, const bool *valid_symbols) {
             lexer->result_symbol = JUXTAPOSE;
             return true;
         }
+    }
+    // `"""doc""" f`: a statement that is only a string, followed on its line by what it documents
+    // (JuliaSyntax parse_docstring): end the statement there, as a newline would (zero-width), unless a
+    // word operator continues the expression or a block ends (`"a" in xs`, `"a" end`)
+    if (ws_before && t->after_doc && valid_symbols[NEWLINE] && !valid_symbols[SPACE_SENSITIVE_PROBE] &&
+        !valid_symbols[MACRO_ARGS_PROBE] && !recovering && !lexer->eof(lexer) &&
+        lexer->lookahead >= 0 && (lexer->lookahead >= 0x80 || lexer->lookahead == '@' ||
+         (jsk_ascii_identifier_char[lexer->lookahead] && !(lexer->lookahead >= '0' && lexer->lookahead <= '9')))) {
+        lexer->mark_end(lexer);
+        if (lexer->lookahead == '@') { lexer->result_symbol = NEWLINE; return true; }
+        if (lexer->lookahead >= 0x80) { // a name (`"doc" λ`), not an operator (`"a" ∈ xs`)
+            uint8_t b[4];
+            size_t w = utf8_encode(b, lexer->lookahead);
+            int32_t o[2];
+            int k = jsyn_token(b, w, 0, o);
+            if (k >= 0 && jsk_kind_class[k] == JSK_C_IDENTIFIER) { lexer->result_symbol = NEWLINE; return true; }
+            return scan_token(lexer, valid_symbols, ws_before, recovering, t, false);
+        }
+        t->n = 0;
+        while (t->n < 16 && !lexer->eof(lexer) && lexer->lookahead >= 0 && lexer->lookahead < 0x80 &&
+               lexer->lookahead != '!' && jsk_ascii_identifier_char[lexer->lookahead]) {
+            t->buf[t->n++] = (uint8_t)lexer->lookahead;
+            lexer->advance(lexer, false);
+        }
+        int32_t o[2];
+        int k = jsyn_token(t->buf, t->n, 0, o);
+        bool whole = k >= 0 && (size_t)o[0] == t->n;
+        if (!(whole && (k == JSK_K_in || k == JSK_K_isa || k == JSK_K_where || k == JSK_K_end || k == JSK_K_else ||
+                        k == JSK_K_elseif || k == JSK_K_catch || k == JSK_K_finally))) {
+            lexer->result_symbol = NEWLINE;
+            return true;
+        }
+        return scan_token(lexer, valid_symbols, ws_before, recovering, t, true);
     }
     // `using ..A`: in an import path, leading dots are the path's (JuliaSyntax: parse_import_path)
     if (valid_symbols[IMPORT_DOTS] && !recovering && lexer->lookahead == '.') {
