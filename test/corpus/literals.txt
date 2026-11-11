@@ -117,27 +117,44 @@ band = "Interpol"
 
 (source_file
   (string_literal)
-  (string_literal (escape_sequence))
-  (string_literal (content))
-  (string_literal (content) (escape_sequence) (content) (escape_sequence) (content))
-  (string_literal (content))
+  (string_literal
+    (escape_sequence))
+  (string_literal
+    (content))
+  (string_literal
+    (content)
+    (escape_sequence)
+    (content)
+    (escape_sequence)
+    (content))
+  (string_literal
+    (content))
   (assignment
     (identifier)
     (operator)
-    (string_literal (content)))
+    (string_literal
+      (content)))
   (string_literal
-    (string_interpolation (identifier))
+    (string_interpolation
+      (identifier))
     (content))
   (string_literal
-    (string_interpolation (juxtaposition_expression (integer_literal) (identifier)))
+    (string_interpolation
+      (parenthesized_expression
+        (juxtaposition_expression
+          (integer_literal)
+          (identifier))))
     (content))
   (string_literal
     (content)
     (string_interpolation
-      (string_literal
-        (content)
-        (string_interpolation
-          (string_literal (content)))))))
+      (parenthesized_expression
+        (string_literal
+          (content)
+          (string_interpolation
+            (parenthesized_expression
+              (string_literal
+                (content)))))))))
 
 
 ==============================

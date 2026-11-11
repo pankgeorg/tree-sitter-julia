@@ -4948,25 +4948,34 @@
                   "name": "_immediate_paren"
                 },
                 {
-                  "type": "SEQ",
-                  "members": [
-                    {
-                      "type": "STRING",
-                      "value": "("
-                    },
-                    {
-                      "type": "SYMBOL",
-                      "name": "_bracket_form"
-                    },
-                    {
-                      "type": "STRING",
-                      "value": ")"
-                    }
-                  ]
+                  "type": "ALIAS",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "_interpolated_parens"
+                  },
+                  "named": true,
+                  "value": "parenthesized_expression"
                 }
               ]
             }
           ]
+        }
+      ]
+    },
+    "_interpolated_parens": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "("
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_bracket_form"
+        },
+        {
+          "type": "STRING",
+          "value": ")"
         }
       ]
     },

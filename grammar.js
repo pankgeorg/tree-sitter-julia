@@ -952,9 +952,12 @@ module.exports = grammar({
       '$',
       choice(
         $.identifier,
-        seq($._immediate_paren, parenthesize($._bracket_form)),
+        // `$(x)`: the parentheses are a node, as JuliaSyntax's `parens`
+        seq($._immediate_paren, alias($._interpolated_parens, $.parenthesized_expression)),
       ),
     ),
+
+    _interpolated_parens: $ => parenthesize($._bracket_form),
 
     operator: $ => choice(
       // NOTE: Syntactic operators (&&, +=, etc) cannot be used as identifiers.

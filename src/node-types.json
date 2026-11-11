@@ -2455,11 +2455,11 @@
       "required": true,
       "types": [
         {
-          "type": "_expression",
+          "type": "identifier",
           "named": true
         },
         {
-          "type": "assignment",
+          "type": "parenthesized_expression",
           "named": true
         }
       ]

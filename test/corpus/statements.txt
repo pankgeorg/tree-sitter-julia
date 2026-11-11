@@ -716,8 +716,9 @@ y = foo +
     (string_literal
       (content)
       (string_interpolation
-        (string_literal
-          (content)))
+        (parenthesized_expression
+          (string_literal
+            (content))))
       (content))
     (block_comment)
     (identifier)))
