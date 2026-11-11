@@ -58,6 +58,7 @@ module.exports = $ => [
   $._colon,
   $._quote_colon,
   $._ternary_colon,
+  $._doc_separator,
   '∈',
   // keywords (JuliaSyntax: is_keyword, is_word_operator)
   'abstract',

@@ -95,41 +95,66 @@ string literals
 ==============================
 
 ""
+
 "\""
+
 "foo
  bar"
+
 "this is a \"string\"."
+
 """this is also a "string"."""
+
 band = "Interpol"
+
 "$band is a cool band"
+
 "$(2π) is a cool number"
+
 "cells interlinked within $("cells interlinked whithin $("cells interlinked whithin one stem")")"
 
 ---
 
 (source_file
   (string_literal)
-  (string_literal (escape_sequence))
-  (string_literal (content))
-  (string_literal (content) (escape_sequence) (content) (escape_sequence) (content))
-  (string_literal (content))
+  (string_literal
+    (escape_sequence))
+  (string_literal
+    (content))
+  (string_literal
+    (content)
+    (escape_sequence)
+    (content)
+    (escape_sequence)
+    (content))
+  (string_literal
+    (content))
   (assignment
     (identifier)
     (operator)
-    (string_literal (content)))
+    (string_literal
+      (content)))
   (string_literal
-    (string_interpolation (identifier))
+    (string_interpolation
+      (identifier))
     (content))
   (string_literal
-    (string_interpolation (juxtaposition_expression (integer_literal) (identifier)))
+    (string_interpolation
+      (parenthesized_expression
+        (juxtaposition_expression
+          (integer_literal)
+          (identifier))))
     (content))
   (string_literal
     (content)
     (string_interpolation
-      (string_literal
-        (content)
-        (string_interpolation
-          (string_literal (content)))))))
+      (parenthesized_expression
+        (string_literal
+          (content)
+          (string_interpolation
+            (parenthesized_expression
+              (string_literal
+                (content)))))))))
 
 
 ==============================
@@ -147,14 +172,23 @@ echo "\033[31mred\033[m"
 ---
 
 (source_file
-  (command_literal (content))
+  (command_literal
+    (content))
   (prefixed_command_literal
     prefix: (identifier)
-    (content))
-  (command_literal (content) (string_interpolation (identifier)))
-  (command_literal (content) (escape_sequence) (content) (escape_sequence))
+    (command_literal
+      (content)))
   (command_literal
-   (content)))
+    (content)
+    (string_interpolation
+      (identifier)))
+  (command_literal
+    (content)
+    (escape_sequence)
+    (content)
+    (escape_sequence))
+  (command_literal
+    (content)))
 
 
 ==============================
@@ -172,17 +206,20 @@ K"\\"
     (identifier)
     (operator)
     (prefixed_string_literal
-        prefix: (identifier)
-        (content)))
+      prefix: (identifier)
+      (string_literal
+        (content))))
   (assignment
     (identifier)
     (operator)
     (prefixed_string_literal
-        prefix: (identifier)
-        (content)))
+      prefix: (identifier)
+      (string_literal
+        (content))))
   (prefixed_string_literal
     prefix: (identifier)
-    (escape_sequence)))
+    (string_literal
+      (escape_sequence))))
 
 
 ==============================

@@ -349,25 +349,9 @@
 (prefixed_command_literal
   prefix: (identifier) @function.macro) @string.special
 
-((string_literal) @string.documentation
+(doc
   .
-  [
-    (abstract_definition)
-    (assignment)
-    (const_statement)
-    (function_definition)
-    (macro_definition)
-    (module_definition)
-    (struct_definition)
-  ])
-
-(source_file
-  (string_literal) @string.documentation
-  .
-  [
-    (identifier)
-    (call_expression)
-  ])
+  (string_literal) @string.documentation)
 
 [
   (line_comment)

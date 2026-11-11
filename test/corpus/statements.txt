@@ -117,13 +117,11 @@ end
 ---
 
 (source_file
-
   (if_statement
     (identifier)
     (elseif_clause
-      (identifier))
-    (else_clause))
-
+      (identifier)
+      (else_clause)))
   (if_statement
     (boolean_literal)
     (block
@@ -131,19 +129,26 @@ end
     (else_clause
       (block
         (integer_literal))))
-
   (if_statement
     (identifier)
     (block
-      (call_expression (identifier) (argument_list)))
+      (call_expression
+        (identifier)
+        (argument_list)))
     (elseif_clause
       (identifier)
       (block
-        (call_expression (identifier) (argument_list))
-        (call_expression (identifier) (argument_list))))
-    (else_clause
-      (block
-        (call_expression (identifier) (argument_list))))))
+        (call_expression
+          (identifier)
+          (argument_list))
+        (call_expression
+          (identifier)
+          (argument_list)))
+      (else_clause
+        (block
+          (call_expression
+            (identifier)
+            (argument_list)))))))
 
 
 ==============================
@@ -635,31 +640,189 @@ y = foo +
 ---
 
 (source_file
-  (string_literal (content))
-  (identifier)
-  (binary_expression (string_literal (content)) (operator) (identifier))
+  (doc
+    (string_literal
+      (content))
+    (identifier))
+  (binary_expression
+    (string_literal
+      (content))
+    (operator)
+    (identifier))
   (module_definition
     name: (identifier)
     (block
-      (string_literal (content))
-      (assignment (call_expression (identifier) (argument_list (identifier))) (operator) (integer_literal))))
+      (doc
+        (string_literal
+          (content))
+        (assignment
+          (call_expression
+            (identifier)
+            (argument_list
+              (identifier)))
+          (operator)
+          (integer_literal)))))
   (import_statement
-    (import_path (identifier) (macro_identifier (operator)))
-    (import_path (identifier) (operator)))
+    (import_path
+      (identifier)
+      (macro_identifier
+        (operator)))
+    (import_path
+      (identifier)
+      (operator)))
   (using_statement
-    (selected_import (import_path (interpolation_expression (identifier))) (interpolation_expression (identifier))))
-  (if_statement condition: (binary_expression (identifier) (operator) (identifier)))
+    (selected_import
+      (import_path
+        (interpolation_expression
+          (identifier)))
+      (interpolation_expression
+        (identifier))))
+  (if_statement
+    condition: (binary_expression
+      (identifier)
+      (operator)
+      (identifier)))
   (function_definition
     (signature
       (where_expression
         (call_expression
           (identifier)
-          (argument_list (identifier) (assignment (identifier) (operator) (operator))))
-        (curly_expression (identifier)))))
-  (assignment (identifier) (operator)
-    (binary_expression (identifier) (operator) (parenthesized_expression (vector_expression))))
-  (assignment (identifier) (operator)
-    (binary_expression (identifier) (operator) (parenthesized_expression (identifier))))
-  (string_literal (content) (string_interpolation (string_literal (content))) (content))
-  (block_comment)
-  (identifier))
+          (argument_list
+            (identifier)
+            (parameters
+              (assignment
+                (identifier)
+                (operator)
+                (operator)))))
+        (curly_expression
+          (identifier)))))
+  (assignment
+    (identifier)
+    (operator)
+    (binary_expression
+      (identifier)
+      (operator)
+      (parenthesized_expression
+        (vector_expression))))
+  (assignment
+    (identifier)
+    (operator)
+    (binary_expression
+      (identifier)
+      (operator)
+      (parenthesized_expression
+        (identifier))))
+  (doc
+    (string_literal
+      (content)
+      (string_interpolation
+        (parenthesized_expression
+          (string_literal
+            (content))))
+      (content))
+    (block_comment)
+    (identifier)))
+
+
+==============================
+docstrings
+==============================
+
+"""
+    f(x)
+
+Docs.
+"""
+f(x) = x
+
+"not documented: a blank line follows"
+
+g
+
+module M
+"doc" struct S end
+end
+
+---
+
+(source_file
+  (doc
+    (string_literal (content))
+    (assignment (call_expression (identifier) (argument_list (identifier))) (operator) (identifier)))
+  (string_literal (content))
+  (identifier)
+  (module_definition
+    name: (identifier)
+    (block
+      (doc
+        (string_literal (content))
+        (struct_definition (type_head (identifier)))))))
+
+==============================
+docstrings: what JuliaSyntax documents
+==============================
+
+"doc"
+==(a, b) = 1
+
+"doc" #= c =# √x
+
+"a" :b
+
+@eval begin
+  "doc"
+  f(x) = 1
+end
+
+function g()
+  "a"
+  f
+end
+
+---
+
+(source_file
+  (doc
+    (string_literal (content))
+    (assignment
+      (call_expression (operator) (argument_list (identifier) (identifier)))
+      (operator)
+      (integer_literal)))
+  (doc
+    (string_literal (content))
+    (block_comment)
+    (unary_expression (operator) (identifier)))
+  (range_expression (string_literal (content)) (identifier))
+  (macrocall_expression
+    (macro_identifier (identifier))
+    (macro_argument_list
+      (compound_statement
+        (block
+          (doc
+            (string_literal (content))
+            (assignment (call_expression (identifier) (argument_list (identifier))) (operator) (integer_literal)))))))
+  (function_definition
+    (signature (call_expression (identifier) (argument_list)))
+    (block (string_literal (content)) (identifier))))
+
+==============================
+sibling parameters, string macro suffixes
+==============================
+
+f(a; b; c)
+x[i, j; a; b]
+r"a"i
+
+---
+
+(source_file
+  (call_expression
+    (identifier)
+    (argument_list (identifier) (parameters (identifier)) (parameters (identifier))))
+  (index_expression
+    (identifier)
+    (vector_expression (identifier) (identifier) (parameters (identifier)) (parameters (identifier))))
+  (prefixed_string_literal
+    prefix: (identifier)
+    (string_literal (content))
+    suffix: (identifier)))

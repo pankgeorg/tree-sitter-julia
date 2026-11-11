@@ -181,11 +181,13 @@ T{y for x = xs; a}
             (identifier)
             (operator)
             (identifier))))
-      (identifier)))
+      (parameters
+        (identifier))))
   (curly_expression
     (identifier)
     (identifier)
-    (identifier)))
+    (parameters
+      (identifier))))
 
 
 ==============================
@@ -222,15 +224,17 @@ new{typeof(xs)}(xs)
     (identifier)
     (argument_list
       (identifier)
-      (assignment
-        (identifier)
-        (operator)
-        (identifier))))
+      (parameters
+        (assignment
+          (identifier)
+          (operator)
+          (identifier)))))
   (call_expression
     (identifier)
     (argument_list
       (identifier)
-      (identifier)))
+      (parameters
+        (identifier))))
   (call_expression
     (parametrized_type_expression
       (identifier)
@@ -260,26 +264,30 @@ f(a;)
     (argument_list
       (identifier)
       (identifier)
-      (identifier)))
+      (parameters
+        (identifier))))
   (call_expression
     (identifier)
     (argument_list
       (identifier)
       (identifier)
-      (assignment
-        (typed_expression
-          (identifier)
-          (identifier))
-        (operator)
-        (boolean_literal))))
+      (parameters
+        (assignment
+          (typed_expression
+            (identifier)
+            (identifier))
+          (operator)
+          (boolean_literal)))))
   (call_expression
     (operator)
     (argument_list
-      (identifier)))
+      (identifier)
+      (parameters)))
   (call_expression
     (identifier)
     (argument_list
-      (identifier))))
+      (identifier)
+      (parameters))))
 
 
 ========================================
@@ -720,7 +728,8 @@ x'x
     (integer_literal)
     (prefixed_string_literal
       (identifier)
-      (content)))
+      (string_literal
+        (content))))
   (juxtaposition_expression
     (adjoint_expression
       (identifier))

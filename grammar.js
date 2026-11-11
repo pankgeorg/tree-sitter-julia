@@ -50,7 +50,6 @@ module.exports = grammar({
     $._block_form,
     $._terminator,
     $._operation,
-    $._argument_separator,
     $._tuple_body,
     $._matrix_body,
   ],
@@ -60,8 +59,9 @@ module.exports = grammar({
   externals: $ => require('./grammar-tokens.js')($),
 
   conflicts: $ => [
-    [$.matrix_row, $.comprehension_expression], // Comprehensions with newlines
+    [$.matrix_row, $._comprehension_generator], // Comprehensions with newlines
     [$.parenthesized_expression, $.tuple_expression],
+    [$.parenthesized_expression, $.parameters], // `(a; b)` is a block (dynamic precedence), `(a, b; c)` a tuple
     [$.compound_statement, $._expression], // `a[begin+1]`: `begin` is firstindex inside indexing
     [$.macro_argument_list], // `[@m a b for x in xs]`: in brackets, where macro arguments end
   ],
@@ -85,7 +85,18 @@ module.exports = grammar({
     )),
 
     // top level and module bodies: the only places JuliaSyntax reads `public` as a keyword (parse_public)
-    _toplevel_form: $ => choice($._block_form, $.public_statement),
+    // and documents statements (parse_docstring)
+    _toplevel_form: $ => choice($._block_form, $.public_statement, $.doc),
+
+    // JuliaSyntax's `doc`: a docstring and what it documents, on the same line or the next (the scanner
+    // decides: not after a blank line or a comment line, not before a closing token)
+    doc: $ => seq($.string_literal, $._doc_separator, choice($._block_form, $.public_statement)),
+
+    // `begin`/`quote` bodies document statements too (JuliaSyntax parse_resword), function bodies do not
+    _doc_block: $ => seq(
+      sep1($._terminator, choice($._block_form, $.doc)),
+      optional($._terminator)
+    ),
 
     _module_block: $ => seq(
       sep1($._terminator, $._toplevel_form),
@@ -271,9 +282,9 @@ module.exports = grammar({
       $.using_statement,
     ),
 
-    compound_statement: $ => seq('begin', optional($._terminator), optional($.block), 'end'),
+    compound_statement: $ => seq('begin', optional($._terminator), optional(alias($._doc_block, $.block)), 'end'),
 
-    quote_statement: $ => seq('quote', optional($._terminator), optional($.block), 'end'),
+    quote_statement: $ => seq('quote', optional($._terminator), optional(alias($._doc_block, $.block)), 'end'),
 
     let_statement: $ => seq(
       'let',
@@ -289,16 +300,17 @@ module.exports = grammar({
       field('condition', $._expression),
       optional($._terminator),
       optional($.block),
-      field('alternative', repeat($.elseif_clause)),
-      field('alternative', optional($.else_clause)),
+      field('alternative', optional(choice($.elseif_clause, $.else_clause))),
       'end',
     ),
 
+    // the rest of the chain is inside (JuliaSyntax: `(if c a (elseif d b e))`)
     elseif_clause: $ => seq(
       'elseif',
       field('condition', $._expression),
       optional($._terminator),
       optional($.block),
+      field('alternative', optional(choice($.elseif_clause, $.else_clause))),
     ),
 
     else_clause: $ => seq(
@@ -479,8 +491,14 @@ module.exports = grammar({
       $.vector_expression,
     ),
 
+    // the contents are a generator, as in JuliaSyntax (`(comprehension (generator x (iteration …)))`)
     comprehension_expression: $ => prec(PREC.array, seq(
       '[',
+      alias($._comprehension_generator, $.generator),
+      ']',
+    )),
+
+    _comprehension_generator: $ => prec(PREC.array, seq(
       $._bracket_form,
       optional($._terminator),
       $.for_clause,
@@ -488,7 +506,6 @@ module.exports = grammar({
         $.for_clause,
         $.if_clause,
       )),
-      ']',
     )),
 
     generator: $ => seq(
@@ -537,8 +554,11 @@ module.exports = grammar({
 
     vector_expression: $ => seq(
       '[',
-      sep(',', $._bracket_form),
-      optional(','),
+      optional(choice(
+        seq(sep1(',', $._bracket_form), optional(',')),
+        seq($._bracket_form, repeat1(seq(',', $._bracket_form)), optional(','), repeat1($.parameters)), // `[a, b; c]`
+        seq($._bracket_form, ',', repeat1($.parameters)), // `[a,; c]`
+      )),
       ']',
     ),
 
@@ -552,17 +572,21 @@ module.exports = grammar({
 
     tuple_expression: $ => parenthesize(optional($._tuple_body)),
 
+    // `f(a, b; c)`, `f(a, b, ; c)`, `f(a;)`, `(; a)`: what follows `;` is JuliaSyntax's `parameters`
     _tuple_body: $ => choice(
-      $._semicolon,
+      repeat1($.parameters),
       seq(
-        optional($._semicolon),
-        sep1($._argument_separator, choice($._bracket_form, $.generator)),
-        optional($._argument_separator),
+        sep1(',', choice($._bracket_form, $.generator)),
+        optional(','),
+        repeat($.parameters), // `f(a; b; c)`: siblings, as in JuliaSyntax
       ),
     ),
 
-    // `f(a, b; c)`, `f(a, b, ; c)`, `f(a;)`
-    _argument_separator: $ => choice(',', seq(optional(','), $._semicolon)),
+    parameters: $ => prec.right(seq(
+      $._semicolon,
+      sep(',', choice($._bracket_form, $.generator)),
+      optional(','),
+    )),
 
     curly_expression: $ => seq(
       '{',
@@ -887,49 +911,58 @@ module.exports = grammar({
       ),
     ),
 
+    // the quoted part is a string_literal/command_literal of its own (JuliaSyntax: the string macro's
+    // argument), raw: no interpolation
     prefixed_string_literal: $ => prec.left(seq(
       field('prefix', $.identifier),
       $._immediate_string_start,
-      choice(
-        seq(
-          $._delimiter_str_1,
-          repeat(choice(alias($._content_str_1_raw_run, $.content), $.escape_sequence)),
-          $._end_str,
-        ),
-        seq(
-          $._delimiter_str_3,
-          repeat(choice(alias($._content_str_3_raw_run, $.content), $.escape_sequence)),
-          $._end_str,
-        ),
-      ),
+      alias($._raw_string_literal, $.string_literal),
       optional(field('suffix', alias($._string_suffix, $.identifier))),
     )),
+
+    _raw_string_literal: $ => choice(
+      seq(
+        $._delimiter_str_1,
+        repeat(choice(alias($._content_str_1_raw_run, $.content), $.escape_sequence)),
+        $._end_str,
+      ),
+      seq(
+        $._delimiter_str_3,
+        repeat(choice(alias($._content_str_3_raw_run, $.content), $.escape_sequence)),
+        $._end_str,
+      ),
+    ),
 
     prefixed_command_literal: $ => prec.left(seq(
       field('prefix', $.identifier),
       $._immediate_command_start,
-      choice(
-        seq(
-          $._delimiter_cmd_1,
-          repeat(choice(alias($._content_cmd_1_raw_run, $.content), $.escape_sequence)),
-          $._end_cmd,
-        ),
-        seq(
-          $._delimiter_cmd_3,
-          repeat(choice(alias($._content_cmd_3_raw_run, $.content), $.escape_sequence)),
-          $._end_cmd,
-        ),
-      ),
+      alias($._raw_command_literal, $.command_literal),
       optional(field('suffix', alias($._string_suffix, $.identifier))),
     )),
+
+    _raw_command_literal: $ => choice(
+      seq(
+        $._delimiter_cmd_1,
+        repeat(choice(alias($._content_cmd_1_raw_run, $.content), $.escape_sequence)),
+        $._end_cmd,
+      ),
+      seq(
+        $._delimiter_cmd_3,
+        repeat(choice(alias($._content_cmd_3_raw_run, $.content), $.escape_sequence)),
+        $._end_cmd,
+      ),
+    ),
 
     string_interpolation: $ => seq(
       '$',
       choice(
         $.identifier,
-        seq($._immediate_paren, parenthesize($._bracket_form)),
+        // `$(x)`: the parentheses are a node, as JuliaSyntax's `parens`
+        seq($._immediate_paren, alias($._interpolated_parens, $.parenthesized_expression)),
       ),
     ),
+
+    _interpolated_parens: $ => parenthesize($._bracket_form),
 
     operator: $ => choice(
       // NOTE: Syntactic operators (&&, +=, etc) cannot be used as identifiers.
