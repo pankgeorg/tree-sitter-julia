@@ -794,23 +794,11 @@
     "named": true,
     "fields": {},
     "children": {
-      "multiple": true,
+      "multiple": false,
       "required": true,
       "types": [
         {
-          "type": "_expression",
-          "named": true
-        },
-        {
-          "type": "assignment",
-          "named": true
-        },
-        {
-          "type": "for_clause",
-          "named": true
-        },
-        {
-          "type": "if_clause",
+          "type": "generator",
           "named": true
         }
       ]

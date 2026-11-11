@@ -2177,6 +2177,28 @@
             "value": "["
           },
           {
+            "type": "ALIAS",
+            "content": {
+              "type": "SYMBOL",
+              "name": "_comprehension_generator"
+            },
+            "named": true,
+            "value": "generator"
+          },
+          {
+            "type": "STRING",
+            "value": "]"
+          }
+        ]
+      }
+    },
+    "_comprehension_generator": {
+      "type": "PREC",
+      "value": -1,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
             "type": "SYMBOL",
             "name": "_bracket_form"
           },
@@ -2211,10 +2233,6 @@
                 }
               ]
             }
-          },
-          {
-            "type": "STRING",
-            "value": "]"
           }
         ]
       }
@@ -5180,7 +5198,7 @@
   "conflicts": [
     [
       "matrix_row",
-      "comprehension_expression"
+      "_comprehension_generator"
     ],
     [
       "parenthesized_expression",

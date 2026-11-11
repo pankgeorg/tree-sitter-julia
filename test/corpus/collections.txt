@@ -209,21 +209,48 @@ comprehension array collections
 UInt[b(c, e) for c in d for e in f]
 
 ---
+
 (source_file
   (comprehension_expression
-    (identifier)
-    (for_clause (for_binding (identifier) (operator) (identifier))))
-
+    (generator
+      (identifier)
+      (for_clause
+        (for_binding
+          (identifier)
+          (operator)
+          (identifier)))))
   (comprehension_expression
-    (identifier)
-    (for_clause (for_binding (identifier) (operator) (identifier)))
-    (if_clause (binary_expression (identifier) (operator) (integer_literal))))
+    (generator
+      (identifier)
+      (for_clause
+        (for_binding
+          (identifier)
+          (operator)
+          (identifier)))
+      (if_clause
+        (binary_expression
+          (identifier)
+          (operator)
+          (integer_literal)))))
   (index_expression
     (identifier)
     (comprehension_expression
-      (call_expression (identifier) (argument_list (identifier) (identifier)))
-      (for_clause (for_binding (identifier) (operator) (identifier)))
-      (for_clause (for_binding (identifier) (operator) (identifier))))))
+      (generator
+        (call_expression
+          (identifier)
+          (argument_list
+            (identifier)
+            (identifier)))
+        (for_clause
+          (for_binding
+            (identifier)
+            (operator)
+            (identifier)))
+        (for_clause
+          (for_binding
+            (identifier)
+            (operator)
+            (identifier)))))))
 
 
 ==============================
@@ -240,24 +267,25 @@ Any[ @spawnat p reduce(f, x) for p in procs(S) ]
   (index_expression
     (identifier)
     (comprehension_expression
-      (macrocall_expression
-        (macro_identifier
-          (identifier))
-        (macro_argument_list
-          (identifier)
-          (call_expression
+      (generator
+        (macrocall_expression
+          (macro_identifier
+            (identifier))
+          (macro_argument_list
             (identifier)
-            (argument_list
+            (call_expression
               (identifier)
-              (identifier)))))
-      (for_clause
-        (for_binding
-          (identifier)
-          (operator)
-          (call_expression
+              (argument_list
+                (identifier)
+                (identifier)))))
+        (for_clause
+          (for_binding
             (identifier)
-            (argument_list
-              (identifier)))))))
+            (operator)
+            (call_expression
+              (identifier)
+              (argument_list
+                (identifier))))))))
   (vector_expression
     (macrocall_expression
       (macro_identifier

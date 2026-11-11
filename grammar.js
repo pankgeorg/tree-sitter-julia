@@ -59,7 +59,7 @@ module.exports = grammar({
   externals: $ => require('./grammar-tokens.js')($),
 
   conflicts: $ => [
-    [$.matrix_row, $.comprehension_expression], // Comprehensions with newlines
+    [$.matrix_row, $._comprehension_generator], // Comprehensions with newlines
     [$.parenthesized_expression, $.tuple_expression],
     [$.parenthesized_expression, $.parameters], // `(a; b)` is a block (dynamic precedence), `(a, b; c)` a tuple
     [$.compound_statement, $._expression], // `a[begin+1]`: `begin` is firstindex inside indexing
@@ -485,8 +485,14 @@ module.exports = grammar({
       $.vector_expression,
     ),
 
+    // the contents are a generator, as in JuliaSyntax (`(comprehension (generator x (iteration …)))`)
     comprehension_expression: $ => prec(PREC.array, seq(
       '[',
+      alias($._comprehension_generator, $.generator),
+      ']',
+    )),
+
+    _comprehension_generator: $ => prec(PREC.array, seq(
       $._bracket_form,
       optional($._terminator),
       $.for_clause,
@@ -494,7 +500,6 @@ module.exports = grammar({
         $.for_clause,
         $.if_clause,
       )),
-      ']',
     )),
 
     generator: $ => seq(
