@@ -1941,10 +1941,6 @@
         {
           "type": "generator",
           "named": true
-        },
-        {
-          "type": "parameters",
-          "named": true
         }
       ]
     }

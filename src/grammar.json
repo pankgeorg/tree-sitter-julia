@@ -95,6 +95,66 @@
         }
       ]
     },
+    "_doc_block": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "_block_form"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "doc"
+                }
+              ]
+            },
+            {
+              "type": "REPEAT",
+              "content": {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "_terminator"
+                  },
+                  {
+                    "type": "CHOICE",
+                    "members": [
+                      {
+                        "type": "SYMBOL",
+                        "name": "_block_form"
+                      },
+                      {
+                        "type": "SYMBOL",
+                        "name": "doc"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_terminator"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        }
+      ]
+    },
     "_module_block": {
       "type": "SEQ",
       "members": [
@@ -974,8 +1034,13 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "block"
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_doc_block"
+              },
+              "named": true,
+              "value": "block"
             },
             {
               "type": "BLANK"
@@ -1011,8 +1076,13 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "block"
+              "type": "ALIAS",
+              "content": {
+                "type": "SYMBOL",
+                "name": "_doc_block"
+              },
+              "named": true,
+              "value": "block"
             },
             {
               "type": "BLANK"
@@ -2571,8 +2641,11 @@
                       ]
                     },
                     {
-                      "type": "SYMBOL",
-                      "name": "parameters"
+                      "type": "REPEAT1",
+                      "content": {
+                        "type": "SYMBOL",
+                        "name": "parameters"
+                      }
                     }
                   ]
                 },
@@ -2588,8 +2661,11 @@
                       "value": ","
                     },
                     {
-                      "type": "SYMBOL",
-                      "name": "parameters"
+                      "type": "REPEAT1",
+                      "content": {
+                        "type": "SYMBOL",
+                        "name": "parameters"
+                      }
                     }
                   ]
                 }
@@ -2707,8 +2783,11 @@
       "type": "CHOICE",
       "members": [
         {
-          "type": "SYMBOL",
-          "name": "parameters"
+          "type": "REPEAT1",
+          "content": {
+            "type": "SYMBOL",
+            "name": "parameters"
+          }
         },
         {
           "type": "SEQ",
@@ -2769,16 +2848,11 @@
               ]
             },
             {
-              "type": "CHOICE",
-              "members": [
-                {
-                  "type": "SYMBOL",
-                  "name": "parameters"
-                },
-                {
-                  "type": "BLANK"
-                }
-              ]
+              "type": "REPEAT",
+              "content": {
+                "type": "SYMBOL",
+                "name": "parameters"
+              }
             }
           ]
         }
@@ -2851,18 +2925,6 @@
               {
                 "type": "STRING",
                 "value": ","
-              },
-              {
-                "type": "BLANK"
-              }
-            ]
-          },
-          {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "parameters"
               },
               {
                 "type": "BLANK"

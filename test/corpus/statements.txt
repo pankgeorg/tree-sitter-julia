@@ -757,3 +757,72 @@ end
       (doc
         (string_literal (content))
         (struct_definition (type_head (identifier)))))))
+
+==============================
+docstrings: what JuliaSyntax documents
+==============================
+
+"doc"
+==(a, b) = 1
+
+"doc" #= c =# √x
+
+"a" :b
+
+@eval begin
+  "doc"
+  f(x) = 1
+end
+
+function g()
+  "a"
+  f
+end
+
+---
+
+(source_file
+  (doc
+    (string_literal (content))
+    (assignment
+      (call_expression (operator) (argument_list (identifier) (identifier)))
+      (operator)
+      (integer_literal)))
+  (doc
+    (string_literal (content))
+    (block_comment)
+    (unary_expression (operator) (identifier)))
+  (range_expression (string_literal (content)) (identifier))
+  (macrocall_expression
+    (macro_identifier (identifier))
+    (macro_argument_list
+      (compound_statement
+        (block
+          (doc
+            (string_literal (content))
+            (assignment (call_expression (identifier) (argument_list (identifier))) (operator) (integer_literal)))))))
+  (function_definition
+    (signature (call_expression (identifier) (argument_list)))
+    (block (string_literal (content)) (identifier))))
+
+==============================
+sibling parameters, string macro suffixes
+==============================
+
+f(a; b; c)
+x[i, j; a; b]
+r"a"i
+
+---
+
+(source_file
+  (call_expression
+    (identifier)
+    (argument_list (identifier) (parameters (identifier)) (parameters (identifier))))
+  (index_expression
+    (identifier)
+    (vector_expression (identifier) (identifier) (parameters (identifier)) (parameters (identifier))))
+  (prefixed_string_literal
+    prefix: (identifier)
+    (string_literal (content))
+    suffix: (identifier)))

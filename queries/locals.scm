@@ -16,6 +16,12 @@
   (open_tuple
     (identifier) @local.definition))
 
+(assignment
+  .
+  (tuple_expression
+    (parameters
+      (identifier) @local.definition)))
+
 (for_binding
   .
   (identifier) @local.definition)

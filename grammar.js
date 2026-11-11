@@ -92,6 +92,12 @@ module.exports = grammar({
     // decides: not after a blank line or a comment line, not before a closing token)
     doc: $ => seq($.string_literal, $._doc_separator, choice($._block_form, $.public_statement)),
 
+    // `begin`/`quote` bodies document statements too (JuliaSyntax parse_resword), function bodies do not
+    _doc_block: $ => seq(
+      sep1($._terminator, choice($._block_form, $.doc)),
+      optional($._terminator)
+    ),
+
     _module_block: $ => seq(
       sep1($._terminator, $._toplevel_form),
       optional($._terminator)
@@ -276,9 +282,9 @@ module.exports = grammar({
       $.using_statement,
     ),
 
-    compound_statement: $ => seq('begin', optional($._terminator), optional($.block), 'end'),
+    compound_statement: $ => seq('begin', optional($._terminator), optional(alias($._doc_block, $.block)), 'end'),
 
-    quote_statement: $ => seq('quote', optional($._terminator), optional($.block), 'end'),
+    quote_statement: $ => seq('quote', optional($._terminator), optional(alias($._doc_block, $.block)), 'end'),
 
     let_statement: $ => seq(
       'let',
@@ -550,8 +556,8 @@ module.exports = grammar({
       '[',
       optional(choice(
         seq(sep1(',', $._bracket_form), optional(',')),
-        seq($._bracket_form, repeat1(seq(',', $._bracket_form)), optional(','), $.parameters), // `[a, b; c]`
-        seq($._bracket_form, ',', $.parameters), // `[a,; c]`
+        seq($._bracket_form, repeat1(seq(',', $._bracket_form)), optional(','), repeat1($.parameters)), // `[a, b; c]`
+        seq($._bracket_form, ',', repeat1($.parameters)), // `[a,; c]`
       )),
       ']',
     ),
@@ -568,11 +574,11 @@ module.exports = grammar({
 
     // `f(a, b; c)`, `f(a, b, ; c)`, `f(a;)`, `(; a)`: what follows `;` is JuliaSyntax's `parameters`
     _tuple_body: $ => choice(
-      $.parameters,
+      repeat1($.parameters),
       seq(
         sep1(',', choice($._bracket_form, $.generator)),
         optional(','),
-        optional($.parameters),
+        repeat($.parameters), // `f(a; b; c)`: siblings, as in JuliaSyntax
       ),
     ),
 
@@ -580,7 +586,6 @@ module.exports = grammar({
       $._semicolon,
       sep(',', choice($._bracket_form, $.generator)),
       optional(','),
-      optional($.parameters), // `f(a; b; c)`
     )),
 
     curly_expression: $ => seq(
