@@ -390,6 +390,10 @@
         {
           "type": "generator",
           "named": true
+        },
+        {
+          "type": "parameters",
+          "named": true
         }
       ]
     }
@@ -863,6 +867,10 @@
         },
         {
           "type": "matrix_row",
+          "named": true
+        },
+        {
+          "type": "parameters",
           "named": true
         }
       ]
@@ -1882,6 +1890,33 @@
     "fields": {}
   },
   {
+    "type": "parameters",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "_expression",
+          "named": true
+        },
+        {
+          "type": "assignment",
+          "named": true
+        },
+        {
+          "type": "generator",
+          "named": true
+        },
+        {
+          "type": "parameters",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "parametrized_type_expression",
     "named": true,
     "fields": {},
@@ -2508,6 +2543,10 @@
         {
           "type": "generator",
           "named": true
+        },
+        {
+          "type": "parameters",
+          "named": true
         }
       ]
     }
@@ -2801,6 +2840,10 @@
         },
         {
           "type": "assignment",
+          "named": true
+        },
+        {
+          "type": "parameters",
           "named": true
         }
       ]

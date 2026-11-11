@@ -444,7 +444,6 @@ function g(; x, y::Int, z = 1, kwargs...) nothing end
 ---
 
 (source_file
-  ;; Parameters
   (function_definition
     (signature
       (call_expression
@@ -454,17 +453,20 @@ function g(; x, y::Int, z = 1, kwargs...) nothing end
           (typed_expression
             (identifier)
             (identifier))
-          (assignment (identifier) (operator) (integer_literal))
-          (splat_expression (identifier))))))
-
-  ;; Typed parameters
+          (assignment
+            (identifier)
+            (operator)
+            (integer_literal))
+          (splat_expression
+            (identifier))))))
   (function_definition
     (signature
       (argument_list
         (unary_typed_expression
           (parametrized_type_expression
             (identifier)
-            (curly_expression (identifier))))
+            (curly_expression
+              (identifier))))
         (assignment
           (typed_expression
             (identifier)
@@ -475,28 +477,33 @@ function g(; x, y::Int, z = 1, kwargs...) nothing end
           (typed_expression
             (identifier)
             (identifier))))))
-
-  ;; Keyword parameters
   (function_definition
     (signature
       (call_expression
         (identifier)
         (argument_list
           (identifier)
-          (splat_expression (identifier))
-          (splat_expression (identifier))))))
-
-  (function_definition
-    (signature
-      (call_expression
-        (identifier)
-        (argument_list
-          (identifier)
-          (typed_expression
-            (identifier)
+          (splat_expression
             (identifier))
-          (assignment (identifier) (operator) (integer_literal))
-          (splat_expression (identifier)))))
+          (parameters
+            (splat_expression
+              (identifier)))))))
+  (function_definition
+    (signature
+      (call_expression
+        (identifier)
+        (argument_list
+          (parameters
+            (identifier)
+            (typed_expression
+              (identifier)
+              (identifier))
+            (assignment
+              (identifier)
+              (operator)
+              (integer_literal))
+            (splat_expression
+              (identifier))))))
     (block
       (identifier))))
 
@@ -626,7 +633,6 @@ Base.show(io::IO, ::MIME"text/plain", m::Method; kwargs...) = show_method(io, m,
 ---
 
 (source_file
-  ;; `where` without brackets
   (function_definition
     (signature
       (where_expression
@@ -637,8 +643,6 @@ Base.show(io::IO, ::MIME"text/plain", m::Method; kwargs...) = show_method(io, m,
               (identifier)
               (identifier))))
         (identifier))))
-
-  ;; `where`
   (function_definition
     (signature
       (where_expression
@@ -655,16 +659,18 @@ Base.show(io::IO, ::MIME"text/plain", m::Method; kwargs...) = show_method(io, m,
             (identifier)))))
     (block
       (identifier)))
-
-  ;; Short function `where`
   (assignment
     (where_expression
       (where_expression
         (call_expression
           (identifier)
           (argument_list
-            (typed_expression (identifier) (identifier))
-            (typed_expression (identifier) (identifier))))
+            (typed_expression
+              (identifier)
+              (identifier))
+            (typed_expression
+              (identifier)
+              (identifier))))
         (curly_expression
           (binary_expression
             (identifier)
@@ -680,21 +686,21 @@ Base.show(io::IO, ::MIME"text/plain", m::Method; kwargs...) = show_method(io, m,
       (identifier)
       (operator)
       (identifier)))
-
-  ;; Short function with type parameters
   (assignment
     (where_expression
       (call_expression
         (parametrized_type_expression
           (identifier)
-          (curly_expression (identifier)))
+          (curly_expression
+            (identifier)))
         (argument_list
-          (typed_expression (identifier) (identifier))))
-      (curly_expression (identifier)))
+          (typed_expression
+            (identifier)
+            (identifier))))
+      (curly_expression
+        (identifier)))
     (operator)
     (identifier))
-
-  ;; `where` clauses in parameters
   (function_definition
     (signature
       (call_expression
@@ -705,28 +711,36 @@ Base.show(io::IO, ::MIME"text/plain", m::Method; kwargs...) = show_method(io, m,
               (identifier)
               (parametrized_type_expression
                 (identifier)
-                (curly_expression (identifier))))
+                (curly_expression
+                  (identifier))))
             (binary_expression
               (identifier)
               (operator)
               (identifier))))))
     (block
-      (call_expression (identifier) (argument_list (identifier)))))
-
-  ;; Almost everything at once
+      (call_expression
+        (identifier)
+        (argument_list
+          (identifier)))))
   (assignment
     (call_expression
       (field_expression
         value: (identifier)
         (identifier))
       (argument_list
-        (typed_expression (identifier) (identifier))
+        (typed_expression
+          (identifier)
+          (identifier))
         (unary_typed_expression
           (prefixed_string_literal
             prefix: (identifier)
             (content)))
-        (typed_expression (identifier) (identifier))
-        (splat_expression (identifier))))
+        (typed_expression
+          (identifier)
+          (identifier))
+        (parameters
+          (splat_expression
+            (identifier)))))
     (operator)
     (call_expression
       (identifier)

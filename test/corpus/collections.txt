@@ -37,24 +37,52 @@ named tuple collections
 
 (source_file
   (parenthesized_expression
-    (assignment (identifier) (operator) (integer_literal)))
+    (assignment
+      (identifier)
+      (operator)
+      (integer_literal)))
   (line_comment)
   (tuple_expression
-    (assignment (identifier) (operator) (integer_literal)))
+    (assignment
+      (identifier)
+      (operator)
+      (integer_literal)))
   (tuple_expression
-    (assignment (identifier) (operator) (integer_literal))
-    (assignment (identifier) (operator) (integer_literal)))
-  (tuple_expression)
+    (assignment
+      (identifier)
+      (operator)
+      (integer_literal))
+    (assignment
+      (identifier)
+      (operator)
+      (integer_literal)))
   (tuple_expression
-    (identifier))
+    (parameters))
   (tuple_expression
-    (assignment (identifier) (operator) (integer_literal)))
+    (parameters
+      (identifier)))
   (tuple_expression
-    (assignment (identifier) (operator) (integer_literal))
-    (assignment (identifier) (operator) (integer_literal)))
+    (parameters
+      (assignment
+        (identifier)
+        (operator)
+        (integer_literal))))
   (tuple_expression
-    (identifier)
-    (field_expression (identifier) (identifier))))
+    (parameters
+      (assignment
+        (identifier)
+        (operator)
+        (integer_literal))
+      (assignment
+        (identifier)
+        (operator)
+        (integer_literal))))
+  (tuple_expression
+    (parameters
+      (identifier)
+      (field_expression
+        (identifier)
+        (identifier)))))
 
 
 ==============================

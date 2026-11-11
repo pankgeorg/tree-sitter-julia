@@ -635,31 +635,81 @@ y = foo +
 ---
 
 (source_file
-  (string_literal (content))
+  (string_literal
+    (content))
   (identifier)
-  (binary_expression (string_literal (content)) (operator) (identifier))
+  (binary_expression
+    (string_literal
+      (content))
+    (operator)
+    (identifier))
   (module_definition
     name: (identifier)
     (block
-      (string_literal (content))
-      (assignment (call_expression (identifier) (argument_list (identifier))) (operator) (integer_literal))))
+      (string_literal
+        (content))
+      (assignment
+        (call_expression
+          (identifier)
+          (argument_list
+            (identifier)))
+        (operator)
+        (integer_literal))))
   (import_statement
-    (import_path (identifier) (macro_identifier (operator)))
-    (import_path (identifier) (operator)))
+    (import_path
+      (identifier)
+      (macro_identifier
+        (operator)))
+    (import_path
+      (identifier)
+      (operator)))
   (using_statement
-    (selected_import (import_path (interpolation_expression (identifier))) (interpolation_expression (identifier))))
-  (if_statement condition: (binary_expression (identifier) (operator) (identifier)))
+    (selected_import
+      (import_path
+        (interpolation_expression
+          (identifier)))
+      (interpolation_expression
+        (identifier))))
+  (if_statement
+    condition: (binary_expression
+      (identifier)
+      (operator)
+      (identifier)))
   (function_definition
     (signature
       (where_expression
         (call_expression
           (identifier)
-          (argument_list (identifier) (assignment (identifier) (operator) (operator))))
-        (curly_expression (identifier)))))
-  (assignment (identifier) (operator)
-    (binary_expression (identifier) (operator) (parenthesized_expression (vector_expression))))
-  (assignment (identifier) (operator)
-    (binary_expression (identifier) (operator) (parenthesized_expression (identifier))))
-  (string_literal (content) (string_interpolation (string_literal (content))) (content))
+          (argument_list
+            (identifier)
+            (parameters
+              (assignment
+                (identifier)
+                (operator)
+                (operator)))))
+        (curly_expression
+          (identifier)))))
+  (assignment
+    (identifier)
+    (operator)
+    (binary_expression
+      (identifier)
+      (operator)
+      (parenthesized_expression
+        (vector_expression))))
+  (assignment
+    (identifier)
+    (operator)
+    (binary_expression
+      (identifier)
+      (operator)
+      (parenthesized_expression
+        (identifier))))
+  (string_literal
+    (content)
+    (string_interpolation
+      (string_literal
+        (content)))
+    (content))
   (block_comment)
   (identifier))

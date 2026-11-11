@@ -50,7 +50,6 @@ module.exports = grammar({
     $._block_form,
     $._terminator,
     $._operation,
-    $._argument_separator,
     $._tuple_body,
     $._matrix_body,
   ],
@@ -62,6 +61,7 @@ module.exports = grammar({
   conflicts: $ => [
     [$.matrix_row, $.comprehension_expression], // Comprehensions with newlines
     [$.parenthesized_expression, $.tuple_expression],
+    [$.parenthesized_expression, $.parameters], // `(a; b)` is a block (dynamic precedence), `(a, b; c)` a tuple
     [$.compound_statement, $._expression], // `a[begin+1]`: `begin` is firstindex inside indexing
     [$.macro_argument_list], // `[@m a b for x in xs]`: in brackets, where macro arguments end
   ],
@@ -537,8 +537,11 @@ module.exports = grammar({
 
     vector_expression: $ => seq(
       '[',
-      sep(',', $._bracket_form),
-      optional(','),
+      optional(choice(
+        seq(sep1(',', $._bracket_form), optional(',')),
+        seq($._bracket_form, repeat1(seq(',', $._bracket_form)), optional(','), $.parameters), // `[a, b; c]`
+        seq($._bracket_form, ',', $.parameters), // `[a,; c]`
+      )),
       ']',
     ),
 
@@ -552,17 +555,22 @@ module.exports = grammar({
 
     tuple_expression: $ => parenthesize(optional($._tuple_body)),
 
+    // `f(a, b; c)`, `f(a, b, ; c)`, `f(a;)`, `(; a)`: what follows `;` is JuliaSyntax's `parameters`
     _tuple_body: $ => choice(
-      $._semicolon,
+      $.parameters,
       seq(
-        optional($._semicolon),
-        sep1($._argument_separator, choice($._bracket_form, $.generator)),
-        optional($._argument_separator),
+        sep1(',', choice($._bracket_form, $.generator)),
+        optional(','),
+        optional($.parameters),
       ),
     ),
 
-    // `f(a, b; c)`, `f(a, b, ; c)`, `f(a;)`
-    _argument_separator: $ => choice(',', seq(optional(','), $._semicolon)),
+    parameters: $ => prec.right(seq(
+      $._semicolon,
+      sep(',', choice($._bracket_form, $.generator)),
+      optional(','),
+      optional($.parameters), // `f(a; b; c)`
+    )),
 
     curly_expression: $ => seq(
       '{',
