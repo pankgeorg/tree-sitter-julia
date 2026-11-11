@@ -117,13 +117,11 @@ end
 ---
 
 (source_file
-
   (if_statement
     (identifier)
     (elseif_clause
-      (identifier))
-    (else_clause))
-
+      (identifier)
+      (else_clause)))
   (if_statement
     (boolean_literal)
     (block
@@ -131,19 +129,26 @@ end
     (else_clause
       (block
         (integer_literal))))
-
   (if_statement
     (identifier)
     (block
-      (call_expression (identifier) (argument_list)))
+      (call_expression
+        (identifier)
+        (argument_list)))
     (elseif_clause
       (identifier)
       (block
-        (call_expression (identifier) (argument_list))
-        (call_expression (identifier) (argument_list))))
-    (else_clause
-      (block
-        (call_expression (identifier) (argument_list))))))
+        (call_expression
+          (identifier)
+          (argument_list))
+        (call_expression
+          (identifier)
+          (argument_list)))
+      (else_clause
+        (block
+          (call_expression
+            (identifier)
+            (argument_list)))))))
 
 
 ==============================

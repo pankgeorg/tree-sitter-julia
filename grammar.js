@@ -294,16 +294,17 @@ module.exports = grammar({
       field('condition', $._expression),
       optional($._terminator),
       optional($.block),
-      field('alternative', repeat($.elseif_clause)),
-      field('alternative', optional($.else_clause)),
+      field('alternative', optional(choice($.elseif_clause, $.else_clause))),
       'end',
     ),
 
+    // the rest of the chain is inside (JuliaSyntax: `(if c a (elseif d b e))`)
     elseif_clause: $ => seq(
       'elseif',
       field('condition', $._expression),
       optional($._terminator),
       optional($.block),
+      field('alternative', optional(choice($.elseif_clause, $.else_clause))),
     ),
 
     else_clause: $ => seq(

@@ -1165,22 +1165,20 @@
           "type": "FIELD",
           "name": "alternative",
           "content": {
-            "type": "REPEAT",
-            "content": {
-              "type": "SYMBOL",
-              "name": "elseif_clause"
-            }
-          }
-        },
-        {
-          "type": "FIELD",
-          "name": "alternative",
-          "content": {
             "type": "CHOICE",
             "members": [
               {
-                "type": "SYMBOL",
-                "name": "else_clause"
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "elseif_clause"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "else_clause"
+                  }
+                ]
               },
               {
                 "type": "BLANK"
@@ -1232,6 +1230,31 @@
               "type": "BLANK"
             }
           ]
+        },
+        {
+          "type": "FIELD",
+          "name": "alternative",
+          "content": {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "elseif_clause"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "else_clause"
+                  }
+                ]
+              },
+              {
+                "type": "BLANK"
+              }
+            ]
+          }
         }
       ]
     },
