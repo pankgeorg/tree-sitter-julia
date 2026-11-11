@@ -2095,15 +2095,11 @@
       }
     },
     "children": {
-      "multiple": true,
-      "required": false,
+      "multiple": false,
+      "required": true,
       "types": [
         {
-          "type": "content",
-          "named": true
-        },
-        {
-          "type": "escape_sequence",
+          "type": "command_literal",
           "named": true
         }
       ]
@@ -2135,15 +2131,11 @@
       }
     },
     "children": {
-      "multiple": true,
-      "required": false,
+      "multiple": false,
+      "required": true,
       "types": [
         {
-          "type": "content",
-          "named": true
-        },
-        {
-          "type": "escape_sequence",
+          "type": "string_literal",
           "named": true
         }
       ]

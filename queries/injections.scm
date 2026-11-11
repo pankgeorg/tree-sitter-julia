@@ -15,14 +15,16 @@
 ; Inject regex in r"..." and r"""...""" (e.g. r"hello\bworld")
 (prefixed_string_literal
   prefix: (identifier) @_prefix
-  (content) @injection.content
+  (string_literal
+    (content) @injection.content)
   (#eq? @_prefix "r")
   (#set! injection.language "regex"))
 
 ; Inject markdown in md"..." and md"""...""" (e.g. md"**Bold** and _Italics_")
 (prefixed_string_literal
   prefix: (identifier) @_prefix
-  (content) @injection.content
+  (string_literal
+    (content) @injection.content)
   (#eq? @_prefix "md")
   (#set! injection.language "markdown"))
 

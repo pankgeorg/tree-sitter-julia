@@ -155,14 +155,23 @@ echo "\033[31mred\033[m"
 ---
 
 (source_file
-  (command_literal (content))
+  (command_literal
+    (content))
   (prefixed_command_literal
     prefix: (identifier)
-    (content))
-  (command_literal (content) (string_interpolation (identifier)))
-  (command_literal (content) (escape_sequence) (content) (escape_sequence))
+    (command_literal
+      (content)))
   (command_literal
-   (content)))
+    (content)
+    (string_interpolation
+      (identifier)))
+  (command_literal
+    (content)
+    (escape_sequence)
+    (content)
+    (escape_sequence))
+  (command_literal
+    (content)))
 
 
 ==============================
@@ -180,17 +189,20 @@ K"\\"
     (identifier)
     (operator)
     (prefixed_string_literal
-        prefix: (identifier)
-        (content)))
+      prefix: (identifier)
+      (string_literal
+        (content))))
   (assignment
     (identifier)
     (operator)
     (prefixed_string_literal
-        prefix: (identifier)
-        (content)))
+      prefix: (identifier)
+      (string_literal
+        (content))))
   (prefixed_string_literal
     prefix: (identifier)
-    (escape_sequence)))
+    (string_literal
+      (escape_sequence))))
 
 
 ==============================

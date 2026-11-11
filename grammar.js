@@ -900,41 +900,47 @@ module.exports = grammar({
       ),
     ),
 
+    // the quoted part is a string_literal/command_literal of its own (JuliaSyntax: the string macro's
+    // argument), raw: no interpolation
     prefixed_string_literal: $ => prec.left(seq(
       field('prefix', $.identifier),
       $._immediate_string_start,
-      choice(
-        seq(
-          $._delimiter_str_1,
-          repeat(choice(alias($._content_str_1_raw_run, $.content), $.escape_sequence)),
-          $._end_str,
-        ),
-        seq(
-          $._delimiter_str_3,
-          repeat(choice(alias($._content_str_3_raw_run, $.content), $.escape_sequence)),
-          $._end_str,
-        ),
-      ),
+      alias($._raw_string_literal, $.string_literal),
       optional(field('suffix', alias($._string_suffix, $.identifier))),
     )),
+
+    _raw_string_literal: $ => choice(
+      seq(
+        $._delimiter_str_1,
+        repeat(choice(alias($._content_str_1_raw_run, $.content), $.escape_sequence)),
+        $._end_str,
+      ),
+      seq(
+        $._delimiter_str_3,
+        repeat(choice(alias($._content_str_3_raw_run, $.content), $.escape_sequence)),
+        $._end_str,
+      ),
+    ),
 
     prefixed_command_literal: $ => prec.left(seq(
       field('prefix', $.identifier),
       $._immediate_command_start,
-      choice(
-        seq(
-          $._delimiter_cmd_1,
-          repeat(choice(alias($._content_cmd_1_raw_run, $.content), $.escape_sequence)),
-          $._end_cmd,
-        ),
-        seq(
-          $._delimiter_cmd_3,
-          repeat(choice(alias($._content_cmd_3_raw_run, $.content), $.escape_sequence)),
-          $._end_cmd,
-        ),
-      ),
+      alias($._raw_command_literal, $.command_literal),
       optional(field('suffix', alias($._string_suffix, $.identifier))),
     )),
+
+    _raw_command_literal: $ => choice(
+      seq(
+        $._delimiter_cmd_1,
+        repeat(choice(alias($._content_cmd_1_raw_run, $.content), $.escape_sequence)),
+        $._end_cmd,
+      ),
+      seq(
+        $._delimiter_cmd_3,
+        repeat(choice(alias($._content_cmd_3_raw_run, $.content), $.escape_sequence)),
+        $._end_cmd,
+      ),
+    ),
 
     string_interpolation: $ => seq(
       '$',

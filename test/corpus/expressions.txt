@@ -728,7 +728,8 @@ x'x
     (integer_literal)
     (prefixed_string_literal
       (identifier)
-      (content)))
+      (string_literal
+        (content))))
   (juxtaposition_expression
     (adjoint_expression
       (identifier))
