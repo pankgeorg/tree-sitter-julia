@@ -20,9 +20,6 @@ typedef struct {
     uint8_t in_import;      // inside `import`/`using`, up to a newline, `;` or closing bracket (serialized)
     uint8_t in_head;        // in the head of `if`/`elseif`/`while`/`for`, up to a newline or `;`:
                             // not space-sensitive there (serialized)
-    uint8_t doc_open;       // strings open since one that started a statement (`"a $("b")"`: 2) (serialized)
-    uint8_t after_doc;      // the last token closed such a string: what follows on its line is documented
-                            // (serialized)
     size_t tok_end;         // length of the token scan_token just emitted (bytes of buf)
 } TokBuf;
 
@@ -37,25 +34,21 @@ void tree_sitter_julia_external_scanner_destroy(void *payload) {
     if (t) { free(t->buf); free(t); }
 }
 
-// Five bytes of state: whether the next token has no left operand (after an operator or keyword: `a && !b`
+// Three bytes of state: whether the next token has no left operand (after an operator or keyword: `a && !b`
 // does not juxtapose, `return -1` is a prefix minus), whether we are in an import path (`import Base.*`)
-// and whether we are in a block head (`if x :a`: a range); two more for docstrings on the line of what they
-// document. Everything else is in the text ahead and in valid_symbols.
+// and whether we are in a block head (`if x :a`: a range). Everything else is in the text ahead and in
+// valid_symbols.
 unsigned tree_sitter_julia_external_scanner_serialize(void *payload, char *buffer) {
     buffer[0] = (char)((TokBuf *)payload)->after_operator;
     buffer[1] = (char)((TokBuf *)payload)->in_import;
     buffer[2] = (char)((TokBuf *)payload)->in_head;
-    buffer[3] = (char)((TokBuf *)payload)->doc_open;
-    buffer[4] = (char)((TokBuf *)payload)->after_doc;
-    return 5;
+    return 3;
 }
 
 void tree_sitter_julia_external_scanner_deserialize(void *payload, const char *buffer, unsigned size) {
     ((TokBuf *)payload)->after_operator = size > 0 ? (uint8_t)buffer[0] : 0;
     ((TokBuf *)payload)->in_import = size > 1 ? (uint8_t)buffer[1] : 0;
     ((TokBuf *)payload)->in_head = size > 2 ? (uint8_t)buffer[2] : 0;
-    ((TokBuf *)payload)->doc_open = size > 3 ? (uint8_t)buffer[3] : 0;
-    ((TokBuf *)payload)->after_doc = size > 4 ? (uint8_t)buffer[4] : 0;
 }
 
 static size_t utf8_encode(uint8_t *b, int32_t c) {
@@ -617,16 +610,8 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
     // where whitespace starts the arguments (`@m *(b)`)
     bool after_operand = valid_symbols[JUXTAPOSE] && !t->after_operator && !valid_symbols[MACRO_ARGS_PROBE] &&
                          !(valid_symbols[CONTENT_STR_1] && valid_symbols[CONTENT_CMD_1]);
-    // where a statement starts at top level or in a module (JuliaSyntax parse_docstring there: a statement
-    // that is only a string documents what follows it on its line or the next); `public` is valid only there
-    bool stmt_start = valid_symbols[KW_PUBLIC] && !(valid_symbols[CONTENT_STR_1] && valid_symbols[CONTENT_CMD_1]);
     if (!scan(t, lexer, valid_symbols)) return false;
     TSSymbol s = lexer->result_symbol;
-    if ((s == DELIMITER_STR_1 || s == DELIMITER_STR_3) && (t->doc_open || stmt_start) && t->doc_open < 255) t->doc_open++;
-    if (s != LINE_COMMENT && s != BLOCK_COMMENT) // `"doc" #= c =# f`
-        t->after_doc = s == END_STR && t->doc_open == 1;
-    if (s == END_STR && t->doc_open) t->doc_open--;
-    if (s == NEWLINE) t->doc_open = 0; // (an unterminated string in error recovery)
     if (s != JUXTAPOSE && s != IMMEDIATE_PAREN && s != IMMEDIATE_BRACKET && s != IMMEDIATE_BRACE &&
         s != IMMEDIATE_STRING_START && s != IMMEDIATE_COMMAND_START && s != LINE_COMMENT && s != BLOCK_COMMENT) {
         // no left operand next: after an operator, or a keyword that does not end an expression (`return -1`)
@@ -687,6 +672,36 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
     return true;
 }
 
+// Whether the token at the lookahead can be what a docstring documents: not a closing token, not a word
+// operator continuing the string's expression, not an operator (`"a" ∈ xs`). Reads an ASCII word into t
+// (t->n > 0 then) for scan_token's prefilled path; marks nothing.
+static bool documents(TSLexer *lexer, TokBuf *t) {
+    t->n = 0;
+    int32_t c = lexer->lookahead;
+    if (lexer->eof(lexer) || c == ')' || c == ']' || c == '}' || c == ',' || c == ';') return false;
+    if (c == '@' || c == '"' || c == '(' || c == '[' || c == '{' || c == '$' || c == ':' || c == '\'' ||
+        (c >= '0' && c <= '9'))
+        return true;
+    if (c >= 0x80) { // a name (`"doc" λ`), not an operator (`"a" ∈ xs`)
+        uint8_t b[4];
+        size_t w = utf8_encode(b, c);
+        int32_t o[2];
+        int k = jsyn_token(b, w, 0, o);
+        return k >= 0 && jsk_kind_class[k] == JSK_C_IDENTIFIER;
+    }
+    if (c < 0 || !jsk_ascii_identifier_char[c]) return false;
+    while (t->n < 16 && !lexer->eof(lexer) && lexer->lookahead >= 0 && lexer->lookahead < 0x80 &&
+           lexer->lookahead != '!' && jsk_ascii_identifier_char[lexer->lookahead]) {
+        t->buf[t->n++] = (uint8_t)lexer->lookahead;
+        lexer->advance(lexer, false);
+    }
+    int32_t o[2];
+    int k = jsyn_token(t->buf, t->n, 0, o);
+    bool whole = k >= 0 && (size_t)o[0] == t->n;
+    return !(whole && (k == JSK_K_in || k == JSK_K_isa || k == JSK_K_where || k == JSK_K_end || k == JSK_K_else ||
+                       k == JSK_K_elseif || k == JSK_K_catch || k == JSK_K_finally));
+}
+
 static bool scan(TokBuf *t, TSLexer *lexer, const bool *valid_symbols) {
     t->n = 0;
     t->tok_end = 0; // set by scan_token for the tokens it lexes (their text is in t->buf)
@@ -722,6 +737,18 @@ static bool scan(TokBuf *t, TSLexer *lexer, const bool *valid_symbols) {
     bool ws_before = false;
     for (;;) {
         int32_t c = lexer->lookahead;
+        if (c == '\n' && valid_symbols[DOC_SEPARATOR] && !recovering) {
+            // a docstring's newline: what the next line starts documents, unless it is blank, a comment, a
+            // closing token or the end (JuliaSyntax parse_docstring); else the newline ends the statement
+            lexer->advance(lexer, false);
+            lexer->mark_end(lexer);
+            while (lexer->lookahead == ' ' || lexer->lookahead == '\t') lexer->advance(lexer, false);
+            int32_t d = lexer->lookahead;
+            bool doc = !lexer->eof(lexer) && d != '\n' && d != '\r' && d != '#' && documents(lexer, t);
+            if (!doc && !valid_symbols[NEWLINE]) return false;
+            lexer->result_symbol = doc ? DOC_SEPARATOR : NEWLINE;
+            return true;
+        }
         if (c == '\n') {
             // not after an infix operator: its right operand follows (`if a >⏎ b`, where `>` could
             // otherwise end the condition and start the block as a name)
@@ -770,38 +797,16 @@ static bool scan(TokBuf *t, TSLexer *lexer, const bool *valid_symbols) {
             return true;
         }
     }
-    // `"""doc""" f`: a statement that is only a string, followed on its line by what it documents
-    // (JuliaSyntax parse_docstring): end the statement there, as a newline would (zero-width), unless a
-    // word operator continues the expression or a block ends (`"a" in xs`, `"a" end`)
-    if (ws_before && t->after_doc && valid_symbols[NEWLINE] && !valid_symbols[SPACE_SENSITIVE_PROBE] &&
-        !valid_symbols[MACRO_ARGS_PROBE] && !recovering && !lexer->eof(lexer) &&
-        lexer->lookahead >= 0 && (lexer->lookahead >= 0x80 || lexer->lookahead == '@' ||
-         (jsk_ascii_identifier_char[lexer->lookahead] && !(lexer->lookahead >= '0' && lexer->lookahead <= '9')))) {
+    // `"""doc""" f`: a docstring followed on its line by what it documents (JuliaSyntax parse_docstring):
+    // zero-width, unless a word operator continues the expression or a block ends (`"a" in xs`, `"a" end`)
+    if (ws_before && valid_symbols[DOC_SEPARATOR] && !recovering && !lexer->eof(lexer)) {
         lexer->mark_end(lexer);
-        if (lexer->lookahead == '@') { lexer->result_symbol = NEWLINE; return true; }
-        if (lexer->lookahead >= 0x80) { // a name (`"doc" λ`), not an operator (`"a" ∈ xs`)
-            uint8_t b[4];
-            size_t w = utf8_encode(b, lexer->lookahead);
-            int32_t o[2];
-            int k = jsyn_token(b, w, 0, o);
-            if (k >= 0 && jsk_kind_class[k] == JSK_C_IDENTIFIER) { lexer->result_symbol = NEWLINE; return true; }
-            return scan_token(lexer, valid_symbols, ws_before, recovering, t, false);
-        }
-        t->n = 0;
-        while (t->n < 16 && !lexer->eof(lexer) && lexer->lookahead >= 0 && lexer->lookahead < 0x80 &&
-               lexer->lookahead != '!' && jsk_ascii_identifier_char[lexer->lookahead]) {
-            t->buf[t->n++] = (uint8_t)lexer->lookahead;
-            lexer->advance(lexer, false);
-        }
-        int32_t o[2];
-        int k = jsyn_token(t->buf, t->n, 0, o);
-        bool whole = k >= 0 && (size_t)o[0] == t->n;
-        if (!(whole && (k == JSK_K_in || k == JSK_K_isa || k == JSK_K_where || k == JSK_K_end || k == JSK_K_else ||
-                        k == JSK_K_elseif || k == JSK_K_catch || k == JSK_K_finally))) {
-            lexer->result_symbol = NEWLINE;
+        if (documents(lexer, t)) {
+            lexer->result_symbol = DOC_SEPARATOR;
             return true;
         }
-        return scan_token(lexer, valid_symbols, ws_before, recovering, t, true);
+        return t->n > 0 ? scan_token(lexer, valid_symbols, ws_before, recovering, t, true)
+                        : scan_token(lexer, valid_symbols, ws_before, recovering, t, false);
     }
     // `using ..A`: in an import path, leading dots are the path's (JuliaSyntax: parse_import_path)
     if (valid_symbols[IMPORT_DOTS] && !recovering && lexer->lookahead == '.') {

@@ -85,7 +85,12 @@ module.exports = grammar({
     )),
 
     // top level and module bodies: the only places JuliaSyntax reads `public` as a keyword (parse_public)
-    _toplevel_form: $ => choice($._block_form, $.public_statement),
+    // and documents statements (parse_docstring)
+    _toplevel_form: $ => choice($._block_form, $.public_statement, $.doc),
+
+    // JuliaSyntax's `doc`: a docstring and what it documents, on the same line or the next (the scanner
+    // decides: not after a blank line or a comment line, not before a closing token)
+    doc: $ => seq($.string_literal, $._doc_separator, choice($._block_form, $.public_statement)),
 
     _module_block: $ => seq(
       sep1($._terminator, $._toplevel_form),

@@ -476,6 +476,10 @@
           "named": true
         },
         {
+          "type": "doc",
+          "named": true
+        },
+        {
           "type": "open_tuple",
           "named": true
         },
@@ -894,6 +898,33 @@
         },
         {
           "type": "block",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "doc",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "_expression",
+          "named": true
+        },
+        {
+          "type": "assignment",
+          "named": true
+        },
+        {
+          "type": "open_tuple",
+          "named": true
+        },
+        {
+          "type": "public_statement",
           "named": true
         }
       ]
@@ -2389,6 +2420,10 @@
         },
         {
           "type": "assignment",
+          "named": true
+        },
+        {
+          "type": "doc",
           "named": true
         },
         {

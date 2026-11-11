@@ -58,6 +58,7 @@ enum TokenType {
     COLON,
     QUOTE_COLON,
     TERNARY_COLON,
+    DOC_SEPARATOR,
     ELEMENT_OF,
     KW_ABSTRACT,
     KW_AS,

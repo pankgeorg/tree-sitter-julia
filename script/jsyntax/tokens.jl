@@ -32,5 +32,8 @@ const SCANNER_TOKENS = [
     "_colon",                  # `a:b`, `a : b`, `c ? a : b`; not `[1 :a]` (space-sensitive: a quote)
     "_quote_colon",            # `:x`, `:(a + b)`
     "_ternary_colon",          # `:` ending a ternary's middle branch (JuliaSyntax: ranges off there)
+    # between a docstring and what it documents (JuliaSyntax parse_docstring): zero-width on the same line,
+    # else the newline
+    "_doc_separator",
 ]
 const SCANNER_STRINGS = ["∈" => "ELEMENT_OF"]  # the iteration operator in `for x ∈ xs`

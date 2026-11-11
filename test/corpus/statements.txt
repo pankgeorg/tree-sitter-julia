@@ -635,9 +635,10 @@ y = foo +
 ---
 
 (source_file
-  (string_literal
-    (content))
-  (identifier)
+  (doc
+    (string_literal
+      (content))
+    (identifier))
   (binary_expression
     (string_literal
       (content))
@@ -646,15 +647,16 @@ y = foo +
   (module_definition
     name: (identifier)
     (block
-      (string_literal
-        (content))
-      (assignment
-        (call_expression
-          (identifier)
-          (argument_list
-            (identifier)))
-        (operator)
-        (integer_literal))))
+      (doc
+        (string_literal
+          (content))
+        (assignment
+          (call_expression
+            (identifier)
+            (argument_list
+              (identifier)))
+          (operator)
+          (integer_literal)))))
   (import_statement
     (import_path
       (identifier)
@@ -705,11 +707,47 @@ y = foo +
       (operator)
       (parenthesized_expression
         (identifier))))
-  (string_literal
-    (content)
-    (string_interpolation
-      (string_literal
-        (content)))
-    (content))
-  (block_comment)
-  (identifier))
+  (doc
+    (string_literal
+      (content)
+      (string_interpolation
+        (string_literal
+          (content)))
+      (content))
+    (block_comment)
+    (identifier)))
+
+
+==============================
+docstrings
+==============================
+
+"""
+    f(x)
+
+Docs.
+"""
+f(x) = x
+
+"not documented: a blank line follows"
+
+g
+
+module M
+"doc" struct S end
+end
+
+---
+
+(source_file
+  (doc
+    (string_literal (content))
+    (assignment (call_expression (identifier) (argument_list (identifier))) (operator) (identifier)))
+  (string_literal (content))
+  (identifier)
+  (module_definition
+    name: (identifier)
+    (block
+      (doc
+        (string_literal (content))
+        (struct_definition (type_head (identifier)))))))

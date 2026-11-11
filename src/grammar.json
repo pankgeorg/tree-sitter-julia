@@ -62,6 +62,36 @@
         {
           "type": "SYMBOL",
           "name": "public_statement"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "doc"
+        }
+      ]
+    },
+    "doc": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "string_literal"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_doc_separator"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "_block_form"
+            },
+            {
+              "type": "SYMBOL",
+              "name": "public_statement"
+            }
+          ]
         }
       ]
     },
@@ -5356,6 +5386,10 @@
     {
       "type": "SYMBOL",
       "name": "_ternary_colon"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_doc_separator"
     },
     {
       "type": "STRING",

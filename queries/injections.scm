@@ -1,18 +1,8 @@
 ; Inject markdown in docstrings
-((string_literal
-  (content) @injection.content)
+(doc
   .
-  [
-    (module_definition)
-    (abstract_definition)
-    (struct_definition)
-    (function_definition)
-    (macro_definition)
-    (assignment)
-    (const_statement)
-    (call_expression)
-    (identifier)
-  ]
+  (string_literal
+    (content) @injection.content)
   (#set! injection.language "markdown"))
 
 ; Inject comments
