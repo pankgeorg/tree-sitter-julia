@@ -29,6 +29,8 @@ enum TokenType {
     SPACE_PREFIX_OPERATOR,
     SPACE_SENSITIVE_PROBE,
     MACRO_ARGS_PROBE,
+    MACRO_ARGS_START,
+    MACRO_ARGS_END,
     IDENTIFIER,
     INTEGER_LITERAL,
     FLOAT_LITERAL,
@@ -58,79 +60,30 @@ enum TokenType {
     COLON,
     QUOTE_COLON,
     TERNARY_COLON,
+    HEAD_OPEN,
     ELEMENT_OF,
     KW_ABSTRACT,
-    KW_AS,
-    KW_BAREMODULE,
-    KW_BEGIN,
-    KW_BREAK,
-    KW_CATCH,
-    KW_CONST,
-    KW_CONTINUE,
-    KW_DO,
-    KW_ELSE,
-    KW_ELSEIF,
-    KW_END,
-    KW_EXPORT,
-    KW_FINALLY,
-    KW_FOR,
-    KW_FUNCTION,
-    KW_GLOBAL,
-    KW_IF,
     KW_IMPORT,
     KW_IN,
     KW_ISA,
-    KW_LET,
-    KW_LOCAL,
-    KW_MACRO,
-    KW_MODULE,
     KW_MUTABLE,
     KW_OUTER,
     KW_PRIMITIVE,
     KW_PUBLIC,
-    KW_QUOTE,
     KW_RETURN,
-    KW_STRUCT,
-    KW_TRY,
     KW_TYPE,
     KW_USING,
     KW_WHERE,
-    KW_WHILE,
     TOKEN_COUNT_,
 };
 #define FIRST_KEYWORD KW_ABSTRACT
-#define LAST_KEYWORD KW_WHILE
+#define LAST_KEYWORD KW_WHERE
 static int keyword_symbol(int k) {
     switch (k) {
-        case 7: return KW_BAREMODULE; // baremodule
-        case 8: return KW_BEGIN; // begin
-        case 9: return KW_BREAK; // break
-        case 10: return KW_CONST; // const
-        case 11: return KW_CONTINUE; // continue
-        case 12: return KW_DO; // do
-        case 13: return KW_EXPORT; // export
-        case 14: return KW_FOR; // for
-        case 15: return KW_FUNCTION; // function
-        case 16: return KW_GLOBAL; // global
-        case 17: return KW_IF; // if
         case 18: return KW_IMPORT; // import
-        case 19: return KW_LET; // let
-        case 20: return KW_LOCAL; // local
-        case 21: return KW_MACRO; // macro
-        case 22: return KW_MODULE; // module
-        case 23: return KW_QUOTE; // quote
         case 24: return KW_RETURN; // return
-        case 25: return KW_STRUCT; // struct
-        case 26: return KW_TRY; // try
         case 27: return KW_USING; // using
-        case 28: return KW_WHILE; // while
-        case 29: return KW_CATCH; // catch
-        case 30: return KW_FINALLY; // finally
-        case 31: return KW_ELSE; // else
-        case 32: return KW_ELSEIF; // elseif
-        case 33: return KW_END; // end
         case 34: return KW_ABSTRACT; // abstract
-        case 35: return KW_AS; // as
         case 37: return KW_MUTABLE; // mutable
         case 38: return KW_OUTER; // outer
         case 39: return KW_PRIMITIVE; // primitive
@@ -140,5 +93,37 @@ static int keyword_symbol(int k) {
         case 253: return KW_ISA; // isa
         case 706: return KW_WHERE; // where
         default: return -1;
+    }
+}
+// keywords of grammar.js that the internal lexer lexes (not externals)
+static bool internal_keyword(int k) {
+    switch (k) {
+        case 7: // baremodule
+        case 8: // begin
+        case 9: // break
+        case 10: // const
+        case 11: // continue
+        case 12: // do
+        case 13: // export
+        case 14: // for
+        case 15: // function
+        case 16: // global
+        case 17: // if
+        case 19: // let
+        case 20: // local
+        case 21: // macro
+        case 22: // module
+        case 23: // quote
+        case 25: // struct
+        case 26: // try
+        case 28: // while
+        case 29: // catch
+        case 30: // finally
+        case 31: // else
+        case 32: // elseif
+        case 33: // end
+        case 35: // as
+            return true;
+        default: return false;
     }
 }

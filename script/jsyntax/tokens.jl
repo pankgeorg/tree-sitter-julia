@@ -15,7 +15,10 @@ const SCANNER_TOKENS = [
     # `[x -y]`: a prefix `+`/`-` starting a new element (JuliaSyntax's space-sensitive rule)
     "_space_prefix_operator",
     "_space_sensitive_probe",  # never emitted: valid right after a matrix-row / macro-argument element
-    "_macro_args_probe",       # never emitted: valid right after a macro name, where arguments may start
+    "_macro_args_probe",       # never emitted: valid where the first macro argument starts
+    # zero-width: where a macro's space-separated arguments start and end (JuliaSyntax
+    # parse_space_separated_exprs); the scanner keeps the open argument lists
+    "_macro_args_start", "_macro_args_end",
     # JuliaSyntax's tokens
     "identifier", "integer_literal", "float_literal", "boolean_literal",
     # operators by JuliaSyntax precedence class (same order as kernel.jl CLASSES, ASSIGNMENT..UNARY)
@@ -32,5 +35,13 @@ const SCANNER_TOKENS = [
     "_colon",                  # `a:b`, `a : b`, `c ? a : b`; not `[1 :a]` (space-sensitive: a quote)
     "_quote_colon",            # `:x`, `:(a + b)`
     "_ternary_colon",          # `:` ending a ternary's middle branch (JuliaSyntax: ranges off there)
+    "_head_open",              # zero-width, right after `if`/`elseif`/`for`/`while`: a block head starts
 ]
 const SCANNER_STRINGS = ["∈" => "ELEMENT_OF"]  # the iteration operator in `for x ∈ xs`
+# Keywords the scanner lexes: the contextual ones whose parser rule looks at the next token, the word
+# operators (names right after an operator), and those that set the scanner's state (`import`, `using`,
+# `return`). The others are the internal lexer's (tree-sitter's keyword extraction, `word: identifier`): a
+# keyword where it is valid, else a name. External keywords split the parse table by validity, internal ones
+# don't (`as`, valid only in import paths, would add 2,400 states).
+const SCANNER_KEYWORDS = ["abstract", "import", "in", "isa", "mutable", "outer", "primitive", "public",
+                          "return", "type", "using", "where"]

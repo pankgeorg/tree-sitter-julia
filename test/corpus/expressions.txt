@@ -813,3 +813,73 @@ a -> a = 2, 3
         (operator)
         (integer_literal)))
     (integer_literal)))
+
+==============================
+macro arguments end where JuliaSyntax ends them
+==============================
+
+@time @safetestset "a" begin
+  x
+end
+a && @warn "x" maxlog=1
+[@m a for x in xs]
+@m a # c
+begin @c @g 10 end
+
+---
+
+(source_file
+  (macrocall_expression
+    (macro_identifier
+      (identifier))
+    (macro_argument_list
+      (macrocall_expression
+        (macro_identifier
+          (identifier))
+        (macro_argument_list
+          (string_literal
+            (content))
+          (compound_statement
+            (block
+              (identifier)))))))
+  (binary_expression
+    (identifier)
+    (operator)
+    (macrocall_expression
+      (macro_identifier
+        (identifier))
+      (macro_argument_list
+        (string_literal
+          (content))
+        (assignment
+          (identifier)
+          (operator)
+          (integer_literal)))))
+  (comprehension_expression
+    (macrocall_expression
+      (macro_identifier
+        (identifier))
+      (macro_argument_list
+        (identifier)))
+    (for_clause
+      (for_binding
+        (identifier)
+        (operator)
+        (identifier))))
+  (macrocall_expression
+    (macro_identifier
+      (identifier))
+    (macro_argument_list
+      (identifier)))
+  (line_comment)
+  (compound_statement
+    (block
+      (macrocall_expression
+        (macro_identifier
+          (identifier))
+        (macro_argument_list
+          (macrocall_expression
+            (macro_identifier
+              (identifier))
+            (macro_argument_list
+              (integer_literal))))))))

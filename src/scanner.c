@@ -10,6 +10,10 @@
 /// context JuliaSyntax's parser would: which string we are in, whether a newline ends a statement,
 /// whether a keyword can start a statement here, whether whitespace is significant.
 
+#define MAX_MACRO_FRAMES 64
+#define MACRO_NEWLINE_ENDS 1 // a newline ends the arguments (where one ends a statement or a matrix row)
+#define MACRO_FOR_ENDS 2     // `for` ends them (JuliaSyntax for_generator: in brackets and call arguments)
+
 typedef struct {
     uint8_t *buf; // text of the token being lexed (block comments can be long)
     size_t n;     // bytes consumed from the TSLexer so far
@@ -24,6 +28,10 @@ typedef struct {
     uint8_t after_doc;      // the last token closed such a string: what follows on its line is documented
                             // (serialized)
     size_t tok_end;         // length of the token scan_token just emitted (bytes of buf)
+    // open macro argument lists, innermost last: MACRO_NEWLINE_ENDS, MACRO_FOR_ENDS (serialized). Deeper
+    // lists than MAX_MACRO_FRAMES share the last frame.
+    uint8_t macro_depth;
+    uint8_t macro_frames[MAX_MACRO_FRAMES];
 } TokBuf;
 
 void *tree_sitter_julia_external_scanner_create(void) {
@@ -40,22 +48,32 @@ void tree_sitter_julia_external_scanner_destroy(void *payload) {
 // Five bytes of state: whether the next token has no left operand (after an operator or keyword: `a && !b`
 // does not juxtapose, `return -1` is a prefix minus), whether we are in an import path (`import Base.*`)
 // and whether we are in a block head (`if x :a`: a range); two more for docstrings on the line of what they
-// document. Everything else is in the text ahead and in valid_symbols.
+// document. Then the open macro argument lists: their count and one byte each. Everything else is in the
+// text ahead and in valid_symbols.
 unsigned tree_sitter_julia_external_scanner_serialize(void *payload, char *buffer) {
-    buffer[0] = (char)((TokBuf *)payload)->after_operator;
-    buffer[1] = (char)((TokBuf *)payload)->in_import;
-    buffer[2] = (char)((TokBuf *)payload)->in_head;
-    buffer[3] = (char)((TokBuf *)payload)->doc_open;
-    buffer[4] = (char)((TokBuf *)payload)->after_doc;
-    return 5;
+    TokBuf *t = payload;
+    buffer[0] = (char)t->after_operator;
+    buffer[1] = (char)t->in_import;
+    buffer[2] = (char)t->in_head;
+    buffer[3] = (char)t->doc_open;
+    buffer[4] = (char)t->after_doc;
+    buffer[5] = (char)t->macro_depth;
+    unsigned n = t->macro_depth < MAX_MACRO_FRAMES ? t->macro_depth : MAX_MACRO_FRAMES;
+    memcpy(buffer + 6, t->macro_frames, n);
+    return 6 + n;
 }
 
 void tree_sitter_julia_external_scanner_deserialize(void *payload, const char *buffer, unsigned size) {
-    ((TokBuf *)payload)->after_operator = size > 0 ? (uint8_t)buffer[0] : 0;
-    ((TokBuf *)payload)->in_import = size > 1 ? (uint8_t)buffer[1] : 0;
-    ((TokBuf *)payload)->in_head = size > 2 ? (uint8_t)buffer[2] : 0;
-    ((TokBuf *)payload)->doc_open = size > 3 ? (uint8_t)buffer[3] : 0;
-    ((TokBuf *)payload)->after_doc = size > 4 ? (uint8_t)buffer[4] : 0;
+    TokBuf *t = payload;
+    t->after_operator = size > 0 ? (uint8_t)buffer[0] : 0;
+    t->in_import = size > 1 ? (uint8_t)buffer[1] : 0;
+    t->in_head = size > 2 ? (uint8_t)buffer[2] : 0;
+    t->doc_open = size > 3 ? (uint8_t)buffer[3] : 0;
+    t->after_doc = size > 4 ? (uint8_t)buffer[4] : 0;
+    t->macro_depth = size > 5 ? (uint8_t)buffer[5] : 0;
+    unsigned n = t->macro_depth < MAX_MACRO_FRAMES ? t->macro_depth : MAX_MACRO_FRAMES;
+    if (size >= 6 + n) memcpy(t->macro_frames, buffer + 6, n);
+    else t->macro_depth = 0;
 }
 
 static size_t utf8_encode(uint8_t *b, int32_t c) {
@@ -508,9 +526,15 @@ static bool scan_token(TSLexer *lexer, const bool *valid, bool ws_before, bool r
         sym = IDENTIFIER; // `var"..."`
     } else if (cls == JSK_C_IDENTIFIER) {
         sym = IDENTIFIER;
-    } else if (((cls == JSK_C_KEYWORD && keyword_symbol(k) >= 0) || cls == JSK_C_BOOL) && !ws_before &&
-               valid[QUOTED_KEYWORD] && !recovering) {
+    } else if (((cls == JSK_C_KEYWORD && (keyword_symbol(k) >= 0 || internal_keyword(k))) || cls == JSK_C_BOOL) &&
+               !ws_before && valid[QUOTED_KEYWORD] && !recovering) {
         sym = QUOTED_KEYWORD; // `:end`: right after `:` (JuliaSyntax parse_atom: quote of the next atom)
+    } else if (cls == JSK_C_KEYWORD && internal_keyword(k)) {
+        // the internal lexer's: a keyword where one is valid, else a name (keyword extraction). Except `as`
+        // outside an import, a name: lexed here, it updates the state (`a && as in xs`: `in` has a left
+        // operand), lexed by the internal lexer it would not
+        if (!(k == JSK_K_as && valid[IDENTIFIER] && !t->in_import && !recovering)) return false;
+        sym = IDENTIFIER;
     } else if (cls == JSK_C_KEYWORD) {
         int ks = keyword_symbol(k);
         bool kv = ks >= 0 && valid[ks], iv = valid[IDENTIFIER];
@@ -596,6 +620,16 @@ static bool scan_token(TSLexer *lexer, const bool *valid, bool ws_before, bool r
 
 static bool scan(TokBuf *t, TSLexer *lexer, const bool *valid_symbols);
 
+// The byte at *i, reading on from the lexer as needed; 0 at EOF.
+static int32_t peek_raw(TokBuf *t, TSLexer *lexer, size_t *i) {
+    while (*i >= t->n) {
+        if (lexer->eof(lexer) || !tb_reserve(t)) return 0;
+        t->n += utf8_encode(t->buf + t->n, lexer->lookahead);
+        lexer->advance(lexer, false);
+    }
+    return t->buf[(*i)++];
+}
+
 // The byte at *i after the emitted token's start, reading on from the lexer as needed (looking past the
 // token's marked end is free), skipping spaces and tabs; 0 at EOF. Non-ASCII characters give their first
 // byte, which is enough for the ASCII punctuation the callers look for.
@@ -616,6 +650,7 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
     // right after an operand on the same line (the parser could juxtapose); not right after a macro name,
     // where whitespace starts the arguments (`@m *(b)`)
     bool after_operand = valid_symbols[JUXTAPOSE] && !t->after_operator && !valid_symbols[MACRO_ARGS_PROBE] &&
+                         !valid_symbols[MACRO_ARGS_START] &&
                          !(valid_symbols[CONTENT_STR_1] && valid_symbols[CONTENT_CMD_1]);
     // where a statement starts at top level or in a module (JuliaSyntax parse_docstring there: a statement
     // that is only a string documents what follows it on its line or the next); `public` is valid only there
@@ -623,21 +658,23 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
     if (!scan(t, lexer, valid_symbols)) return false;
     TSSymbol s = lexer->result_symbol;
     if ((s == DELIMITER_STR_1 || s == DELIMITER_STR_3) && (t->doc_open || stmt_start) && t->doc_open < 255) t->doc_open++;
-    if (s != LINE_COMMENT && s != BLOCK_COMMENT) // `"doc" #= c =# f`
+    bool zero_width = s == JUXTAPOSE || s == IMMEDIATE_PAREN || s == IMMEDIATE_BRACKET || s == IMMEDIATE_BRACE ||
+                      s == IMMEDIATE_STRING_START || s == IMMEDIATE_COMMAND_START || s == MACRO_ARGS_START ||
+                      s == MACRO_ARGS_END;
+    if (s != LINE_COMMENT && s != BLOCK_COMMENT && s != MACRO_ARGS_START && s != MACRO_ARGS_END) // `"doc" #= c =# f`
         t->after_doc = s == END_STR && t->doc_open == 1;
     if (s == END_STR && t->doc_open) t->doc_open--;
     if (s == NEWLINE) t->doc_open = 0; // (an unterminated string in error recovery)
-    if (s != JUXTAPOSE && s != IMMEDIATE_PAREN && s != IMMEDIATE_BRACKET && s != IMMEDIATE_BRACE &&
-        s != IMMEDIATE_STRING_START && s != IMMEDIATE_COMMAND_START && s != LINE_COMMENT && s != BLOCK_COMMENT) {
+    if (!zero_width && s != LINE_COMMENT && s != BLOCK_COMMENT) {
         // no left operand next: after an operator, or a keyword that does not end an expression (`return -1`)
         bool op = (s >= ASSIGNMENT_OPERATOR && s <= UNARY_OPERATOR) || s == SPACE_PREFIX_OPERATOR || s == ELEMENT_OF;
         // infix: a binary operator token after an operand (not one spaced or read as a prefix: `[a -b]`,
         // `[a <:b]`, `!`), whose right operand may follow on the next line
         bool infix = after_operand && ((s >= ASSIGNMENT_OPERATOR && s <= TILDE_OPERATOR && s != UNARY_PLUS_OPERATOR) ||
                                        s == ELEMENT_OF);
-        t->after_operator = op ? (infix ? 2 : 1) :
-                            (s >= FIRST_KEYWORD && s <= LAST_KEYWORD && s != KW_END && s != KW_BEGIN && s != KW_BREAK &&
-                             s != KW_CONTINUE); // `a[begin:i]`, `a[end - 1]`: operands
+        // (the scanner's keywords and the start of a block head; `end`, `begin`, `break` and `continue`,
+        // which are operands, are the internal lexer's and leave this state as it was)
+        t->after_operator = op ? (infix ? 2 : 1) : ((s >= FIRST_KEYWORD && s <= LAST_KEYWORD) || s == HEAD_OPEN);
     }
     // which line an import is on: JuliaSyntax's parser knows; here the scanner follows it. Brackets and
     // `;` are the internal lexer's and do not update this state, so look at what follows the token:
@@ -652,11 +689,22 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
     // a block head (JuliaSyntax parses it with parse_cond / parse_iteration_specs, not space-sensitive)
     // ends at a newline or `;`
     // (not `struct`: the grammar's type head has no range, `struct A :b end` stays a quoted body)
-    if (s == KW_IF || s == KW_ELSEIF || s == KW_WHILE || s == KW_FOR) t->in_head = 1;
-    else if (s == NEWLINE || s == KW_END || s == KW_ELSE) t->in_head = 0;
+    if (s == HEAD_OPEN) t->in_head = 1;
+    else if (s == NEWLINE) t->in_head = 0;
     else if (t->in_head && (t->tok_end > 0 || s == BLOCK_COMMENT)) {
+        // `;`, or `end`/`else` right after the head (closing brackets between: `if f(x) end`), which are
+        // the internal lexer's and do not update this state
         size_t i = t->tok_end;
-        if (peek_after(t, lexer, &i) == ';') t->in_head = 0;
+        int32_t c = peek_after(t, lexer, &i);
+        while (c == ')' || c == ']' || c == '}') c = peek_after(t, lexer, &i);
+        if (c == ';') t->in_head = 0;
+        else if (c == 'e' && s != QUOTE_COLON) {
+            char w[6] = {'e', 0, 0, 0, 0, 0};
+            for (int j = 1; j < 5; j++) w[j] = (char)peek_raw(t, lexer, &i);
+            bool end = w[1] == 'n' && w[2] == 'd', els = w[1] == 'l' && w[2] == 's' && w[3] == 'e';
+            int32_t after = (uint8_t)(end ? w[3] : w[4]);
+            if ((end || els) && !(after < 0x80 && jsk_ascii_identifier_char[after]) && after < 0x80) t->in_head = 0;
+        }
     }
     if (t->after_operator && (t->tok_end > 0 || s == BLOCK_COMMENT)) {
         // the bit must describe what the scanner sees next: if a closing token or separator follows
@@ -687,11 +735,106 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
     return true;
 }
 
+// Where a macro's space-separated arguments start and end (JuliaSyntax parse_space_separated_exprs: up to
+// a closing token, a newline where one is significant, `for` in a generator), as zero-width tokens: the
+// arguments start at whatever does not end them. The innermost open list decides; a list that starts
+// where an enclosing list's argument may end (`@a x @b y`) follows that list's rules.
+// Returns 1 for a token, 2 when a word was read into t->buf (scan_token goes on from it), 0 to scan on
+// (only whitespace consumed, which sets *ws_before), -1 for no token.
+static int scan_macro_args(TokBuf *t, TSLexer *lexer, const bool *valid, bool *ws_before) {
+    uint8_t frame = t->macro_depth
+                        ? t->macro_frames[(t->macro_depth < MAX_MACRO_FRAMES ? t->macro_depth : MAX_MACRO_FRAMES) - 1]
+                        : MACRO_NEWLINE_ENDS;
+    if (!valid[MACRO_ARGS_END]) {
+        bool block = valid[NEWLINE] && !valid[SPACE_SENSITIVE_PROBE];
+        frame = (valid[NEWLINE] ? MACRO_NEWLINE_ENDS : 0) | (block ? 0 : MACRO_FOR_ENDS);
+    }
+    // where a newline is also valid, a construct in the argument is open (`@m begin`, where the grammar also
+    // has `begin` as an expression, for `a[begin]`): it goes on
+    bool may_end = valid[MACRO_ARGS_END] && !valid[NEWLINE];
+    if (!may_end && !valid[MACRO_ARGS_START]) return 0;
+    bool newline_ends = frame & MACRO_NEWLINE_ENDS;
+    bool ends = false, word = false;
+    for (;;) {
+        int32_t c = lexer->lookahead;
+        if (lexer->eof(lexer)) { ends = true; break; }
+        if (c == '\n' || c == '\r') {
+            if (newline_ends) { ends = true; break; }
+        } else if (c == '#') {
+            // a comment: after an argument, a line comment ends the line; a block comment is lexed here,
+            // and the next scan decides
+            if (!newline_ends || !may_end) return 0;
+            lexer->mark_end(lexer);
+            lexer->advance(lexer, false);
+            if (lexer->lookahead != '=') { ends = true; break; }
+            lexer->advance(lexer, false);
+            for (int depth = 1; !lexer->eof(lexer);) {
+                int32_t d = lexer->lookahead;
+                lexer->advance(lexer, false);
+                if (d == '#' && lexer->lookahead == '=') { lexer->advance(lexer, false); depth++; }
+                else if (d == '=' && lexer->lookahead == '#') {
+                    lexer->advance(lexer, false);
+                    if (--depth == 0) {
+                        lexer->mark_end(lexer);
+                        lexer->result_symbol = BLOCK_COMMENT;
+                        return 1;
+                    }
+                }
+            }
+            return -1; // unterminated
+        } else if (!is_space(c)) {
+            lexer->mark_end(lexer);
+            if (c == ')' || c == ']' || c == '}' || c == ';') ends = true;
+            else if (c == ',') return 0; // continues an argument (`@m a, b`: a tuple), cannot start one
+            else if (c >= 'a' && c <= 'z') {
+                // a keyword that closes a block ends the arguments, as does `for` after one (a generator,
+                // `[@m a for x in xs]`); another word continues the argument or starts the next one
+                word = true;
+                t->n = 0;
+                while (t->n < 16 && !lexer->eof(lexer) && lexer->lookahead >= 0 && lexer->lookahead < 0x80 &&
+                       lexer->lookahead != '!' && jsk_ascii_identifier_char[lexer->lookahead]) {
+                    t->buf[t->n++] = (uint8_t)lexer->lookahead;
+                    lexer->advance(lexer, false);
+                }
+                int32_t o[2];
+                int k = jsyn_token(t->buf, t->n, 0, o);
+                bool whole = k >= 0 && (size_t)o[0] == t->n && t->n < 16 && lexer->lookahead != '!';
+                ends = whole && (k == JSK_K_end || k == JSK_K_else || k == JSK_K_elseif || k == JSK_K_catch ||
+                                 k == JSK_K_finally || (k == JSK_K_for && (frame & MACRO_FOR_ENDS) && may_end));
+            }
+            break;
+        }
+        lexer->advance(lexer, true);
+        *ws_before = true;
+    }
+    if (ends && may_end) {
+        if (t->macro_depth) t->macro_depth--;
+        lexer->result_symbol = MACRO_ARGS_END;
+        return 1;
+    }
+    // (arguments follow whitespace: what is attached to the name continues it, `@Meta.dump`)
+    if (!ends && valid[MACRO_ARGS_START] && *ws_before) {
+        if (t->macro_depth < 255) {
+            if (t->macro_depth < MAX_MACRO_FRAMES) t->macro_frames[t->macro_depth] = frame;
+            t->macro_depth++;
+        }
+        lexer->result_symbol = MACRO_ARGS_START;
+        return 1;
+    }
+    return word ? 2 : 0;
+}
+
 static bool scan(TokBuf *t, TSLexer *lexer, const bool *valid_symbols) {
     t->n = 0;
     t->tok_end = 0; // set by scan_token for the tokens it lexes (their text is in t->buf)
     // In error recovery every symbol is valid: no string context then
     bool recovering = valid_symbols[CONTENT_STR_1] && valid_symbols[CONTENT_CMD_1];
+
+    // right after `if`/`elseif`/`for`/`while` (the internal lexer's keywords): zero-width
+    if (valid_symbols[HEAD_OPEN] && !recovering) {
+        lexer->result_symbol = HEAD_OPEN;
+        return true;
+    }
 
     // `if m[i]*(c - 1) > s`: an operator right after an operand is infix (JuliaSyntax), so `(` starts its
     // right operand, not the arguments of a call of the operator (`*(b)` as the first statement of the block)
@@ -718,8 +861,26 @@ static bool scan(TokBuf *t, TSLexer *lexer, const bool *valid_symbols) {
     StrCtx x;
     if (!recovering && string_context(valid_symbols, &x)) return scan_string(lexer, valid_symbols, &x, t);
 
-    // Whitespace: skipped; a newline is a token where it terminates a statement (or a matrix row)
     bool ws_before = false;
+    if ((valid_symbols[MACRO_ARGS_START] || valid_symbols[MACRO_ARGS_END]) && !recovering) {
+        int r = scan_macro_args(t, lexer, valid_symbols, &ws_before);
+        if (r == 1) return true;
+        if (r == -1) return false;
+        if (r == 2) {
+            // a word right after an operand: juxtaposed unless reserved (as below)
+            if (!ws_before && valid_symbols[JUXTAPOSE] && !t->after_operator) {
+                int32_t o[2];
+                int k = jsyn_token(t->buf, t->n, 0, o);
+                if (!(k >= 0 && (size_t)o[0] == t->n && !jsk_juxtapose_next[k])) {
+                    lexer->result_symbol = JUXTAPOSE;
+                    return true;
+                }
+            }
+            return scan_token(lexer, valid_symbols, ws_before, recovering, t, true);
+        }
+    }
+
+    // Whitespace: skipped; a newline is a token where it terminates a statement (or a matrix row)
     for (;;) {
         int32_t c = lexer->lookahead;
         if (c == '\n') {
