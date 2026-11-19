@@ -508,9 +508,15 @@ static bool scan_token(TSLexer *lexer, const bool *valid, bool ws_before, bool r
         sym = IDENTIFIER; // `var"..."`
     } else if (cls == JSK_C_IDENTIFIER) {
         sym = IDENTIFIER;
-    } else if (((cls == JSK_C_KEYWORD && keyword_symbol(k) >= 0) || cls == JSK_C_BOOL) && !ws_before &&
-               valid[QUOTED_KEYWORD] && !recovering) {
+    } else if (((cls == JSK_C_KEYWORD && (keyword_symbol(k) >= 0 || internal_keyword(k))) || cls == JSK_C_BOOL) &&
+               !ws_before && valid[QUOTED_KEYWORD] && !recovering) {
         sym = QUOTED_KEYWORD; // `:end`: right after `:` (JuliaSyntax parse_atom: quote of the next atom)
+    } else if (cls == JSK_C_KEYWORD && internal_keyword(k)) {
+        // the internal lexer's: a keyword where one is valid, else a name (keyword extraction). Except `as`
+        // outside an import, a name: lexed here, it updates the state (`a && as in xs`: `in` has a left
+        // operand), lexed by the internal lexer it would not
+        if (!(k == JSK_K_as && valid[IDENTIFIER] && !t->in_import && !recovering)) return false;
+        sym = IDENTIFIER;
     } else if (cls == JSK_C_KEYWORD) {
         int ks = keyword_symbol(k);
         bool kv = ks >= 0 && valid[ks], iv = valid[IDENTIFIER];
@@ -596,6 +602,16 @@ static bool scan_token(TSLexer *lexer, const bool *valid, bool ws_before, bool r
 
 static bool scan(TokBuf *t, TSLexer *lexer, const bool *valid_symbols);
 
+// The byte at *i, reading on from the lexer as needed; 0 at EOF.
+static int32_t peek_raw(TokBuf *t, TSLexer *lexer, size_t *i) {
+    while (*i >= t->n) {
+        if (lexer->eof(lexer) || !tb_reserve(t)) return 0;
+        t->n += utf8_encode(t->buf + t->n, lexer->lookahead);
+        lexer->advance(lexer, false);
+    }
+    return t->buf[(*i)++];
+}
+
 // The byte at *i after the emitted token's start, reading on from the lexer as needed (looking past the
 // token's marked end is free), skipping spaces and tabs; 0 at EOF. Non-ASCII characters give their first
 // byte, which is enough for the ASCII punctuation the callers look for.
@@ -635,9 +651,9 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
         // `[a <:b]`, `!`), whose right operand may follow on the next line
         bool infix = after_operand && ((s >= ASSIGNMENT_OPERATOR && s <= TILDE_OPERATOR && s != UNARY_PLUS_OPERATOR) ||
                                        s == ELEMENT_OF);
-        t->after_operator = op ? (infix ? 2 : 1) :
-                            (s >= FIRST_KEYWORD && s <= LAST_KEYWORD && s != KW_END && s != KW_BEGIN && s != KW_BREAK &&
-                             s != KW_CONTINUE); // `a[begin:i]`, `a[end - 1]`: operands
+        // (the scanner's keywords and the start of a block head; `end`, `begin`, `break` and `continue`,
+        // which are operands, are the internal lexer's and leave this state as it was)
+        t->after_operator = op ? (infix ? 2 : 1) : ((s >= FIRST_KEYWORD && s <= LAST_KEYWORD) || s == HEAD_OPEN);
     }
     // which line an import is on: JuliaSyntax's parser knows; here the scanner follows it. Brackets and
     // `;` are the internal lexer's and do not update this state, so look at what follows the token:
@@ -652,11 +668,22 @@ bool tree_sitter_julia_external_scanner_scan(void *payload, TSLexer *lexer, cons
     // a block head (JuliaSyntax parses it with parse_cond / parse_iteration_specs, not space-sensitive)
     // ends at a newline or `;`
     // (not `struct`: the grammar's type head has no range, `struct A :b end` stays a quoted body)
-    if (s == KW_IF || s == KW_ELSEIF || s == KW_WHILE || s == KW_FOR) t->in_head = 1;
-    else if (s == NEWLINE || s == KW_END || s == KW_ELSE) t->in_head = 0;
+    if (s == HEAD_OPEN) t->in_head = 1;
+    else if (s == NEWLINE) t->in_head = 0;
     else if (t->in_head && (t->tok_end > 0 || s == BLOCK_COMMENT)) {
+        // `;`, or `end`/`else` right after the head (closing brackets between: `if f(x) end`), which are
+        // the internal lexer's and do not update this state
         size_t i = t->tok_end;
-        if (peek_after(t, lexer, &i) == ';') t->in_head = 0;
+        int32_t c = peek_after(t, lexer, &i);
+        while (c == ')' || c == ']' || c == '}') c = peek_after(t, lexer, &i);
+        if (c == ';') t->in_head = 0;
+        else if (c == 'e' && s != QUOTE_COLON) {
+            char w[6] = {'e', 0, 0, 0, 0, 0};
+            for (int j = 1; j < 5; j++) w[j] = (char)peek_raw(t, lexer, &i);
+            bool end = w[1] == 'n' && w[2] == 'd', els = w[1] == 'l' && w[2] == 's' && w[3] == 'e';
+            int32_t after = (uint8_t)(end ? w[3] : w[4]);
+            if ((end || els) && !(after < 0x80 && jsk_ascii_identifier_char[after]) && after < 0x80) t->in_head = 0;
+        }
     }
     if (t->after_operator && (t->tok_end > 0 || s == BLOCK_COMMENT)) {
         // the bit must describe what the scanner sees next: if a closing token or separator follows
@@ -692,6 +719,12 @@ static bool scan(TokBuf *t, TSLexer *lexer, const bool *valid_symbols) {
     t->tok_end = 0; // set by scan_token for the tokens it lexes (their text is in t->buf)
     // In error recovery every symbol is valid: no string context then
     bool recovering = valid_symbols[CONTENT_STR_1] && valid_symbols[CONTENT_CMD_1];
+
+    // right after `if`/`elseif`/`for`/`while` (the internal lexer's keywords): zero-width
+    if (valid_symbols[HEAD_OPEN] && !recovering) {
+        lexer->result_symbol = HEAD_OPEN;
+        return true;
+    }
 
     // `if m[i]*(c - 1) > s`: an operator right after an operand is infix (JuliaSyntax), so `(` starts its
     // right operand, not the arguments of a call of the operator (`*(b)` as the first statement of the block)

@@ -59,6 +59,9 @@ module.exports = grammar({
   // script/jsyntax/tokens.jl and JuliaSyntax's keyword list by script/jsyntax/regenerate.sh
   externals: $ => require('./grammar-tokens.js')($),
 
+  // keywords not in externals are lexed here: the word, then a keyword where one is valid, else a name
+  word: $ => $.identifier,
+
   conflicts: $ => [
     [$.matrix_row, $.comprehension_expression], // Comprehensions with newlines
     [$.parenthesized_expression, $.tuple_expression],
@@ -286,6 +289,7 @@ module.exports = grammar({
 
     if_statement: $ => seq(
       'if',
+      $._head_open,
       field('condition', $._expression),
       optional($._terminator),
       optional($.block),
@@ -296,6 +300,7 @@ module.exports = grammar({
 
     elseif_clause: $ => seq(
       'elseif',
+      $._head_open,
       field('condition', $._expression),
       optional($._terminator),
       optional($.block),
@@ -341,6 +346,7 @@ module.exports = grammar({
 
     for_statement: $ => seq(
       'for',
+      $._head_open,
       sep1(',', $.for_binding),
       optional($._terminator),
       optional($.block),
@@ -349,6 +355,7 @@ module.exports = grammar({
 
     while_statement: $ => seq(
       'while',
+      $._head_open,
       field('condition', $._expression),
       optional($._terminator),
       optional($.block),
@@ -502,11 +509,13 @@ module.exports = grammar({
 
     if_clause: $ => seq(
       'if',
+      $._head_open,
       $._expression,
     ),
 
     for_clause: $ => prec.right(seq(
       'for',
+      $._head_open,
       sep1(',', $.for_binding),
     )),
 
@@ -952,6 +961,10 @@ module.exports = grammar({
     ),
 
     _syntactic_operator: _ => choice('$', '.', '...', '->', '?'),
+
+    // the scanner's (JuliaSyntax: Unicode, `x!=y`, `var"…"`); this pattern lexes only the words the scanner
+    // leaves to the internal lexer: the keywords that are not externals
+    identifier: _ => /[A-Za-z_][A-Za-z_0-9!]*/,
 
 
     _semicolon: _ => seq(';', repeat(token.immediate(';'))),

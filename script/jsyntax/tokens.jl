@@ -32,5 +32,13 @@ const SCANNER_TOKENS = [
     "_colon",                  # `a:b`, `a : b`, `c ? a : b`; not `[1 :a]` (space-sensitive: a quote)
     "_quote_colon",            # `:x`, `:(a + b)`
     "_ternary_colon",          # `:` ending a ternary's middle branch (JuliaSyntax: ranges off there)
+    "_head_open",              # zero-width, right after `if`/`elseif`/`for`/`while`: a block head starts
 ]
 const SCANNER_STRINGS = ["∈" => "ELEMENT_OF"]  # the iteration operator in `for x ∈ xs`
+# Keywords the scanner lexes: the contextual ones whose parser rule looks at the next token, the word
+# operators (names right after an operator), and those that set the scanner's state (`import`, `using`,
+# `return`). The others are the internal lexer's (tree-sitter's keyword extraction, `word: identifier`): a
+# keyword where it is valid, else a name. External keywords split the parse table by validity, internal ones
+# don't (`as`, valid only in import paths, would add 2,400 states).
+const SCANNER_KEYWORDS = ["abstract", "import", "in", "isa", "mutable", "outer", "primitive", "public",
+                          "return", "type", "using", "where"]
