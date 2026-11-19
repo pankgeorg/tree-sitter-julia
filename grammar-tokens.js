@@ -29,6 +29,8 @@ module.exports = $ => [
   $._space_prefix_operator,
   $._space_sensitive_probe,
   $._macro_args_probe,
+  $._macro_args_start,
+  $._macro_args_end,
   $.identifier,
   $.integer_literal,
   $.float_literal,

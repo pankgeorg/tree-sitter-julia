@@ -15,7 +15,10 @@ const SCANNER_TOKENS = [
     # `[x -y]`: a prefix `+`/`-` starting a new element (JuliaSyntax's space-sensitive rule)
     "_space_prefix_operator",
     "_space_sensitive_probe",  # never emitted: valid right after a matrix-row / macro-argument element
-    "_macro_args_probe",       # never emitted: valid right after a macro name, where arguments may start
+    "_macro_args_probe",       # never emitted: valid where the first macro argument starts
+    # zero-width: where a macro's space-separated arguments start and end (JuliaSyntax
+    # parse_space_separated_exprs); the scanner keeps the open argument lists
+    "_macro_args_start", "_macro_args_end",
     # JuliaSyntax's tokens
     "identifier", "integer_literal", "float_literal", "boolean_literal",
     # operators by JuliaSyntax precedence class (same order as kernel.jl CLASSES, ASSIGNMENT..UNARY)

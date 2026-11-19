@@ -3037,69 +3037,79 @@
       ]
     },
     "macrocall_expression": {
-      "type": "PREC_RIGHT",
-      "value": 0,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "SYMBOL",
-            "name": "_macro_head"
-          },
-          {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "_macro_args_probe"
-              },
-              {
-                "type": "BLANK"
-              }
-            ]
-          },
-          {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "macro_argument_list"
-              },
-              {
-                "type": "BLANK"
-              }
-            ]
-          }
-        ]
-      }
-    },
-    "macro_argument_list": {
-      "type": "REPEAT1",
-      "content": {
-        "type": "PREC",
-        "value": -4,
-        "content": {
-          "type": "SEQ",
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "_macro_head"
+        },
+        {
+          "type": "CHOICE",
           "members": [
             {
-              "type": "SYMBOL",
-              "name": "_block_form"
-            },
-            {
-              "type": "CHOICE",
+              "type": "SEQ",
               "members": [
                 {
                   "type": "SYMBOL",
-                  "name": "_space_sensitive_probe"
+                  "name": "_macro_args_start"
                 },
                 {
-                  "type": "BLANK"
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "_macro_args_probe"
+                    },
+                    {
+                      "type": "BLANK"
+                    }
+                  ]
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "macro_argument_list"
                 }
               ]
+            },
+            {
+              "type": "BLANK"
             }
           ]
         }
-      }
+      ]
+    },
+    "macro_argument_list": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "REPEAT1",
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "_block_form"
+              },
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "_space_sensitive_probe"
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "SYMBOL",
+          "name": "_macro_args_end"
+        }
+      ]
     },
     "do_clause": {
       "type": "SEQ",
@@ -5021,9 +5031,6 @@
     [
       "compound_statement",
       "_expression"
-    ],
-    [
-      "macro_argument_list"
     ]
   ],
   "precedences": [],
@@ -5139,6 +5146,14 @@
     {
       "type": "SYMBOL",
       "name": "_macro_args_probe"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_macro_args_start"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "_macro_args_end"
     },
     {
       "type": "SYMBOL",

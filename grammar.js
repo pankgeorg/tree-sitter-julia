@@ -40,7 +40,6 @@ PREC.array = -1;
 PREC.tuple = -1;
 PREC.assign = -2;
 PREC.stmt = -3;
-PREC.macro_arg = -4;
 
 
 module.exports = grammar({
@@ -66,7 +65,6 @@ module.exports = grammar({
     [$.matrix_row, $.comprehension_expression], // Comprehensions with newlines
     [$.parenthesized_expression, $.tuple_expression],
     [$.compound_statement, $._expression], // `a[begin+1]`: `begin` is firstindex inside indexing
-    [$.macro_argument_list], // `[@m a b for x in xs]`: in brackets, where macro arguments end
   ],
 
   supertypes: $ => [
@@ -647,9 +645,15 @@ module.exports = grammar({
       ),
     ),
 
-    macrocall_expression: $ => prec.right(seq($._macro_head, optional($._macro_args_probe), optional($.macro_argument_list))),
+    macrocall_expression: $ => seq(
+      $._macro_head,
+      optional(seq($._macro_args_start, optional($._macro_args_probe), $.macro_argument_list)),
+    ),
 
-    macro_argument_list: $ => repeat1(prec(PREC.macro_arg, seq($._block_form, optional($._space_sensitive_probe)))),
+    macro_argument_list: $ => seq(
+      repeat1(seq($._block_form, optional($._space_sensitive_probe))),
+      $._macro_args_end,
+    ),
 
     do_clause: $ => seq(
       'do',
